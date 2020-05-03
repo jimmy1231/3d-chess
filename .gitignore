@@ -1,0 +1,7 @@
+glfw/
+gcc-test
+*.o
+cmake-build/
+gcc-test
+*.swp
+glm/
