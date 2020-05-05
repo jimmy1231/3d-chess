@@ -89,11 +89,31 @@ void init_per_mat(const GLfloat &bot,
    * Param 2: Aspect ratio of screen (for clipping)
    * Param 3: near
    * Param 4: far
+   *
+   * Try an experiment:
+   * Set far to 10.0f, and try to zoom out, you'll 
+   * notice that at some point, the objects disappear.
+   * This is because they have receded from the 
+   * boundaries of the Orthogonal View Volume (which
+   * is bound by the z=near, z=far planes)
+   *
+   * A good analogy to the Orthogonal View Volume is
+   * your Field of View. Near is as close as you can
+   * see (i.e. right up to your eye), far is as far
+   * as you can see (i.e. the horizon, wherever that
+   * may be), left and right are the limits to your
+   * peripheral vision.
+   * 
+   * Note: notice that glm::perspective does not ask
+   * for the "left" or "right" parameters which complete
+   * the Orthogonal View Volume. This is because left
+   * and right can be derived from the aspect ratio
+   * of the screen!
    */
   M_per = glm::perspective(
     glm::radians(30.0f),
     1400.0f/900.0f,
-    0.1f, 100.0f
+    0.1f, 100.0f 
   );
   print_mat4("M_per adjusted:", M_per);
 }

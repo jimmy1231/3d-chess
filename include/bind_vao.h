@@ -8,6 +8,7 @@
 typedef struct TriangleData {
   glm::vec3 pos;
   glm::vec3 color;
+  glm::vec3 normal;
 } TriangleData;
 
 void bind_vao(GLuint &VAO) {
@@ -20,12 +21,66 @@ void bind_vao(GLuint &VAO) {
    (i.e. no need for vertex processing)
   */
   std::vector<TriangleData> data {
-    {glm::vec3(-1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f)},
-    {glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f)},
-    {glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(1.0f, 1.0f, 0.0f)},
-    {glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(1.0f, 0.0f, 1.0f)},
-    {glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f)},
-    {glm::vec3(1.0f, 0.0f, -1.0f), glm::vec3(1.0f, 0.0f, 1.0f)}
+    {
+      glm::vec3(-1.0f, 0.0f, 1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 0.0f)
+    },
+    {
+      glm::vec3(1.0f, 0.0f, 1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 0.0f)
+    },
+    {
+      glm::vec3(-1.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 0.0f)
+    },
+    {
+      glm::vec3(-1.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 0.0f)
+    },
+    {
+      glm::vec3(1.0f, 0.0f, 1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 0.0f)
+    },
+    {
+      glm::vec3(1.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 1.0f, 0.0f)
+    },
+    {
+      glm::vec3(-1.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f)
+    },
+    {
+      glm::vec3(1.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, 0.5f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f)
+    },
+    {
+      glm::vec3(1.0f, 1.0f, -1.0f),
+      glm::vec3(1.0f, -0.5f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f)
+    },
+    {
+      glm::vec3(-1.0f, 0.0f, -1.0f),
+      glm::vec3(1.0f, -0.5f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f)
+    },
+    {
+      glm::vec3(1.0f, 1.0f, -1.0f),
+      glm::vec3(1.0f, -0.5f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f)
+    },
+    {
+      glm::vec3(-1.0f, 1.0f, -1.0f),
+      glm::vec3(1.0f, -0.5f, 0.0f),
+      glm::vec3(0.0f, 0.0f, -1.0f)
+    }
   };
 
   /*
@@ -104,7 +159,18 @@ void bind_vao(GLuint &VAO) {
     GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
     sizeof(TriangleData), /* Stride: byte offset b/w consecutive vertex attribs */
-    (const void *)(sizeof(TriangleData)/2) /* Offset (in bytes) of the first generic vertext attrib */
+    (const void *)(sizeof(TriangleData)/3) /* Offset (in bytes) of the first generic vertext attrib */
+  );
+
+  /* location = 2 */
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(
+    2,                    /* Position (layout) 1 */
+    3,                    /* Number of components per vertex attrib */
+    GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
+    GL_TRUE,             /* Is normalized? - no */
+    sizeof(TriangleData), /* Stride: byte offset b/w consecutive vertex attribs */
+    (const void *)(2*sizeof(TriangleData)/3) /* Offset (in bytes) of the first generic vertext attrib */
   );
 
   /*

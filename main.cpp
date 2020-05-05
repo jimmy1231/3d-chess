@@ -34,7 +34,7 @@
 #include "transformation_matrices.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
-#define FPS 20
+#define FPS 60 
 #define MAX_MS_PER_FRAME 1000 / FPS /* milliseconds per frame */
 #define WIDTH_PIXELS 1400 
 #define HEIGHT_PIXELS 900 
@@ -54,10 +54,17 @@ glm::vec3 e(2, 2, 3);
 glm::vec3 g;
 glm::vec3 t(0,1,0);
 
+GLfloat p = 100;
+glm::vec3 light(1,1,1);
+glm::vec3 intensity(0.7f,0.7f,0.7f);
+glm::vec3 Ia(0.1f,0.1f,0.1f);
+glm::vec3 kd(0.6f,0.6f,0.6f);
+glm::vec3 ks(0.6f, 0.6f, 0.6f);
+glm::vec3 ka(0.4f,0.4f,0.4f);
+
 glm::mat4 M_per, M_cam;
 glm::vec2 *last_cursor_pos = NULL;
 bool LEFT_MOUSE_BTN_PRESSED = false;
-
 
 void window_callback_scroll(const double &xoffset, const double &yoffset) {
   // Get direction of gaze, and adjust towards/away that direction
@@ -173,7 +180,6 @@ int main(int argc, char *argv[]) {
    * change in between frames, so we can create it once, and
    * reuse it.
   */
-  GLint M_proj_id, M_per_id, M_cam_id;
   init_per_mat(-1,1,-1,1,0.1f, 100.0f,M_per);
   init_camera_mat(g, t, e, M_cam);
   std::cout << "Program: " << prog_id << std::endl;
@@ -210,16 +216,34 @@ int main(int argc, char *argv[]) {
     glUseProgram(prog_id);
     
     GLuint vs_id = shader_ids[0];
+    GLint M_proj_id, M_per_id, M_cam_id;
+    GLint ks_id, kd_id, ka_id;
+    GLint light_id, intensity_id, Ia_id;
+    GLint p_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
+    ks_id = glGetUniformLocation(prog_id, "ks");
+    kd_id = glGetUniformLocation(prog_id, "kd");
+    ka_id = glGetUniformLocation(prog_id, "ka");
+    light_id = glGetUniformLocation(prog_id, "light");
+    intensity_id = glGetUniformLocation(prog_id, "intensity");
+    Ia_id = glGetUniformLocation(prog_id, "Ia");
+    p_id = glGetUniformLocation(prog_id, "p");
 
     // Send uniform variables to device
     init_camera_mat(g, t, e, M_cam);
     glUniformMatrix4fv(M_per_id, 1, GL_FALSE, glm::value_ptr(M_per));
     glUniformMatrix4fv(M_cam_id, 1, GL_FALSE, glm::value_ptr(M_cam));
+    glUniform3fv(ks_id, 1, glm::value_ptr(ks));
+    glUniform3fv(kd_id, 1, glm::value_ptr(kd));
+    glUniform3fv(ka_id, 1, glm::value_ptr(ka));
+    glUniform3fv(light_id, 1, glm::value_ptr(light));
+    glUniform3fv(intensity_id, 1, glm::value_ptr(intensity));
+    glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
+    glUniform1f(p_id, p);
 
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, 12);
     glBindVertexArray(0);
 
     // Unbind the shaders
