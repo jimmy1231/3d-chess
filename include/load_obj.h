@@ -260,11 +260,16 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
     f = f_list[face_id];
     F *face_v;
 
-    int i, j;
-    for (i=0; i<f.size()-2; i++){
+    bool is_wrap_around = false;
+    int i=0, j;
+    while (!is_wrap_around) {
       for (j=i; j<i+3; j++) { 
+        if (j >= f.size()) {
+          is_wrap_around = true;
+        }
+        int _j = j%f.size();
         VBO_STRUCT s_vbo;
-        face_v = f[j];
+        face_v = f[_j];
         /*
          * Need "-1" because .obj files indices begin at 1
          * (rather than 0, as is the vector)
@@ -280,6 +285,8 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
         /* Vector performs deep copy on T */
         data.push_back(s_vbo);
       }
+
+      i += 2;
     }
   }
 }
