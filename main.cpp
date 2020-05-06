@@ -163,6 +163,8 @@ int main(int argc, char *argv[]) {
   */
   std::vector<ld_o::VBO_STRUCT> t_data;
   load_obj("../cube2.obj", t_data);
+  print_vbo(t_data);
+
   GLuint VAO, prog_id;
   bind_vao(t_data, VAO);
   std::vector<ShaderProg *> shader_progs;

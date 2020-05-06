@@ -186,6 +186,17 @@ ld_o::VP* handle_vp(std::list<std::string> &chks) {
   return vp;
 }
 
+void print_vbo(const std::vector<ld_o::VBO_STRUCT> &data) {
+  int i;
+  for (i=0; i<data.size(); i++) {
+    const ld_o::VBO_STRUCT *v = &data[i];
+    printf("[%d]\n", i);
+    print_vec4("\tv:", v->v);
+    print_vec3("\tn:", v->n);
+    print_vec3("\tt:", v->t);
+  }
+}
+
 void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
   std::ifstream infile(filepath);
   if (!infile.is_open()) {
@@ -250,7 +261,7 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
     F *face_v;
 
     int i, j;
-    for (i=0; i<f.size()-2; i++) {
+    for (i=0; i<f.size()-2; i++){
       for (j=i; j<i+3; j++) { 
         VBO_STRUCT s_vbo;
         face_v = f[j];
@@ -267,12 +278,7 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
         s_vbo.t = glm::vec3(vt->u, vt->v, vt->w);
         
         /* Vector performs deep copy on T */
-        print_vec4("s_vbo.v:", s_vbo.v);
-        print_vec3("s_vbo.n:", s_vbo.n);
-        print_vec3("s_vbo.t:", s_vbo.t);
-
         data.push_back(s_vbo);
-        printf("\n");
       }
     }
   }
