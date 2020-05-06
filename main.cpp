@@ -32,6 +32,7 @@
 #include "load_shader_prog.h"
 #include "bind_vao.h"
 #include "transformation_matrices.h"
+#include "load_obj.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
 #define FPS 60 
@@ -60,7 +61,7 @@ glm::vec3 intensity(0.7f,0.7f,0.7f);
 glm::vec3 Ia(0.1f,0.1f,0.1f);
 glm::vec3 kd(0.6f,0.6f,0.6f);
 glm::vec3 ks(0.6f, 0.6f, 0.6f);
-glm::vec3 ka(0.4f,0.4f,0.4f);
+glm::vec3 ka(1.0f,1.0f,1.0f);
 
 glm::mat4 M_per, M_cam;
 glm::vec2 *last_cursor_pos = NULL;
@@ -152,8 +153,18 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   we can define this locally in this function because GL
+   will copy all of this to GPU anyways, we do not need
+   this data beyond defining it as a means to be copied.
+   Note: this vertices data is already in screen coordinates,
+   therefore, it is meant only for the fragment shader
+   (i.e. no need for vertex processing)
+  */
+  std::vector<ld_o::VBO_STRUCT> t_data;
+  load_obj("../cube2.obj", t_data);
   GLuint VAO, prog_id;
-  bind_vao(VAO);
+  bind_vao(t_data, VAO);
   std::vector<ShaderProg *> shader_progs;
   ShaderProg vs, fs;
   GLuint shader_ids[2];
@@ -183,6 +194,7 @@ int main(int argc, char *argv[]) {
   init_per_mat(-1,1,-1,1,0.1f, 100.0f,M_per);
   init_camera_mat(g, t, e, M_cam);
   std::cout << "Program: " << prog_id << std::endl;
+  std::cout << "Num vertices: " << t_data.size() << std::endl;
   std::cout << "VS: " << shader_ids[0] << std::endl;
   std::cout << "FS: " << shader_ids[1] << std::endl;
 
@@ -243,7 +255,7 @@ int main(int argc, char *argv[]) {
     glUniform1f(p_id, p);
 
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 12);
+    glDrawArrays(GL_TRIANGLES, 0, t_data.size());
     glBindVertexArray(0);
 
     // Unbind the shaders

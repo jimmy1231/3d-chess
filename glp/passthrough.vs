@@ -7,9 +7,10 @@ out vec3 vEye;
 out vec3 vHalf;
 out vec3 vLight;
 
-layout(location = 0) in vec3 in_Position;
-layout(location = 1) in vec3 in_Color;
-layout(location = 2) in vec3 in_Normal;
+layout(location = 0) in vec4 in_Position;
+layout(location = 1) in vec3 in_Normal;
+layout(location = 2) in vec3 in_Texture;
+layout(location = 3) in vec3 in_Color;
 
 uniform mat4 M_per;
 uniform mat4 M_cam;
@@ -40,8 +41,9 @@ void main(void) {
    * which essentially tells the GPU to "guess" (interpolate)
    * the color values.
    */
-  vec3 v = normalize(eye-in_Position);
-  vec3 l = normalize(light-in_Position);
+  vec3 pos = in_Position.xyz;
+  vec3 v = normalize(eye-pos);
+  vec3 l = normalize(light-pos);
   vec3 h = normalize(v+l);
    
   vEye = v;
@@ -49,7 +51,7 @@ void main(void) {
   vLight = l;
 
   // Calculate screen coordinates for input vertex
-  vec4 _pos = M_per*M_cam*vec4(in_Position, 1.0);
+  vec4 _pos = M_per*M_cam*vec4(pos, 1.0);
   float w = _pos[3];
   gl_Position = _pos;
 }

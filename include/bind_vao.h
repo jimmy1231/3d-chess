@@ -5,84 +5,9 @@
 #include <glm/vec3.hpp>
 #include <vector>
 
-typedef struct TriangleData {
-  glm::vec3 pos;
-  glm::vec3 color;
-  glm::vec3 normal;
-} TriangleData;
+#include "load_obj.h"
 
-void bind_vao(GLuint &VAO) {
-  /*
-   we can define this locally in this function because GL
-   will copy all of this to GPU anyways, we do not need
-   this data beyond defining it as a means to be copied.
-   Note: this vertices data is already in screen coordinates,
-   therefore, it is meant only for the fragment shader
-   (i.e. no need for vertex processing)
-  */
-  std::vector<TriangleData> data {
-    {
-      glm::vec3(-1.0f, 0.0f, 1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    },
-    {
-      glm::vec3(1.0f, 0.0f, 1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    },
-    {
-      glm::vec3(-1.0f, 0.0f, -1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    },
-    {
-      glm::vec3(-1.0f, 0.0f, -1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    },
-    {
-      glm::vec3(1.0f, 0.0f, 1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    },
-    {
-      glm::vec3(1.0f, 0.0f, -1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    },
-    {
-      glm::vec3(-1.0f, 0.0f, -1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 0.0f, -1.0f)
-    },
-    {
-      glm::vec3(1.0f, 0.0f, -1.0f),
-      glm::vec3(1.0f, 0.5f, 0.0f),
-      glm::vec3(0.0f, 0.0f, -1.0f)
-    },
-    {
-      glm::vec3(1.0f, 1.0f, -1.0f),
-      glm::vec3(1.0f, -0.5f, 0.0f),
-      glm::vec3(0.0f, 0.0f, -1.0f)
-    },
-    {
-      glm::vec3(-1.0f, 0.0f, -1.0f),
-      glm::vec3(1.0f, -0.5f, 0.0f),
-      glm::vec3(0.0f, 0.0f, -1.0f)
-    },
-    {
-      glm::vec3(1.0f, 1.0f, -1.0f),
-      glm::vec3(1.0f, -0.5f, 0.0f),
-      glm::vec3(0.0f, 0.0f, -1.0f)
-    },
-    {
-      glm::vec3(-1.0f, 1.0f, -1.0f),
-      glm::vec3(1.0f, -0.5f, 0.0f),
-      glm::vec3(0.0f, 0.0f, -1.0f)
-    }
-  };
-
+void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
   /*
    not exactly sure why we have to call glBindBuffer twice.
    glGenBuffers is like malloc
@@ -127,7 +52,7 @@ void bind_vao(GLuint &VAO) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   
   /* Send this data to GPU - it is bound to GL_ARRAY_BUFFER */
-  size_t num_bytes = data.size()*sizeof(TriangleData);
+  size_t num_bytes = data.size()*sizeof(ld_o::VBO_STRUCT);
   glBufferData(GL_ARRAY_BUFFER, num_bytes, data.data(), GL_STATIC_DRAW);
 
   /*
@@ -144,10 +69,10 @@ void bind_vao(GLuint &VAO) {
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(
     0,                    /* Position 0 */ 
-    3,                    /* Number of components per vertex attribute (i.e. vec3 = 3) */
+    4,                    /* Number of components per vertex attribute (i.e. vec3 = 3) */
     GL_FLOAT,             /* Type of each vertex attribute - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
-    sizeof(TriangleData), /* Stride: byte offset between consecutive generic vertex attribs */
+    sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset between consecutive generic vertex attribs */
     0                     /* Offset (in bytes) of the first generic vertex attrib in the array */
   );
 
@@ -158,8 +83,8 @@ void bind_vao(GLuint &VAO) {
     3,                    /* Number of components per vertex attrib */
     GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
-    sizeof(TriangleData), /* Stride: byte offset b/w consecutive vertex attribs */
-    (const void *)(sizeof(TriangleData)/3) /* Offset (in bytes) of the first generic vertext attrib */
+    sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset b/w consecutive vertex attribs */
+    (const void *)(sizeof(glm::vec4)) /* Offset (in bytes) of the first generic vertext attrib */
   );
 
   /* location = 2 */
@@ -168,9 +93,9 @@ void bind_vao(GLuint &VAO) {
     2,                    /* Position (layout) 1 */
     3,                    /* Number of components per vertex attrib */
     GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
-    GL_TRUE,             /* Is normalized? - no */
-    sizeof(TriangleData), /* Stride: byte offset b/w consecutive vertex attribs */
-    (const void *)(2*sizeof(TriangleData)/3) /* Offset (in bytes) of the first generic vertext attrib */
+    GL_FALSE,             /* Is normalized? - no */
+    sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset b/w consecutive vertex attribs */
+    (const void *)(sizeof(glm::vec4)+sizeof(glm::vec3)) /* Offset (in bytes) of the first generic vertext attrib */
   );
 
   /*
