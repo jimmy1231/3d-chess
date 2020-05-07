@@ -7,10 +7,8 @@ out vec3 vEye;
 out vec3 vHalf;
 out vec3 vLight;
 
-layout(location = 0) in vec4 in_Position;
+layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
-layout(location = 2) in vec3 in_Texture;
-layout(location = 3) in vec3 in_Color;
 
 uniform mat4 M_per;
 uniform mat4 M_cam;
@@ -23,7 +21,7 @@ void main(void) {
    * these values (after rasterization - e.g. clipping), 
    * then pass to fragment shader.
    */
-  vColor = in_Color;
+  vColor = vec3(0.5,0.5,0.5);
   vNormal = in_Normal;
   
   /*

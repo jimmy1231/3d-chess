@@ -44,7 +44,7 @@ namespace ld_o {
   } F;
   
   typedef struct VBO_STRUCT {
-    glm::vec4 v;
+    glm::vec3 v;
     glm::vec3 n;
     glm::vec3 t;
   } VBO_STRUCT;
@@ -191,7 +191,7 @@ void print_vbo(const std::vector<ld_o::VBO_STRUCT> &data) {
   for (i=0; i<data.size(); i++) {
     const ld_o::VBO_STRUCT *v = &data[i];
     printf("[%d]\n", i);
-    print_vec4("\tv:", v->v);
+    print_vec3("\tv:", v->v);
     print_vec3("\tn:", v->n);
     print_vec3("\tt:", v->t);
   }
@@ -278,7 +278,7 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
         VT *vt = vt_list[face_v->vt - 1];
         VN *vn = vn_list[face_v->vn - 1];
 
-        s_vbo.v = glm::vec4(v->x, v->y, v->z, v->w);
+        s_vbo.v = glm::vec3(v->x, v->y, v->z);
         s_vbo.n = glm::vec3(vn->x, vn->y, vn->z);
         s_vbo.t = glm::vec3(vt->u, vt->v, vt->w);
         
@@ -286,6 +286,9 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
         data.push_back(s_vbo);
       }
 
+      if (j >= f.size()) {
+        is_wrap_around = true;
+      }
       i += 2;
     }
   }

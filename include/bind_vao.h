@@ -69,7 +69,7 @@ void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(
     0,                    /* Position 0 */ 
-    4,                    /* Number of components per vertex attribute (i.e. vec3 = 3) */
+    3,                    /* Number of components per vertex attribute (i.e. vec3 = 3) */
     GL_FLOAT,             /* Type of each vertex attribute - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
     sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset between consecutive generic vertex attribs */
@@ -84,7 +84,7 @@ void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
     GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
     sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset b/w consecutive vertex attribs */
-    (const void *)(sizeof(glm::vec4)) /* Offset (in bytes) of the first generic vertext attrib */
+    (void *)(3*sizeof(float)) /* Offset (in bytes) of the first generic vertext attrib */
   );
 
   /* location = 2 */
@@ -95,7 +95,7 @@ void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
     GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
     sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset b/w consecutive vertex attribs */
-    (const void *)(sizeof(glm::vec4)+sizeof(glm::vec3)) /* Offset (in bytes) of the first generic vertext attrib */
+    (void *)(6*sizeof(float)) /* Offset (in bytes) of the first generic vertext attrib */
   );
 
   /*

@@ -5,3 +5,4 @@ cmake-build/
 gcc-test
 *.swp
 glm/
+*.swo

@@ -132,8 +132,23 @@ void window_callback_cursor_pos(float xpos, float ypos) {
 }
 
 int main(int argc, char *argv[]) {
-  g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);
+  if (argc != 2) {
+    std::cout << "Please specify input file" << std::endl;
+    exit(0);
+  }
+  std::string infile(argv[1]);
+  /*
+   we can define this locally in this function because GL
+   will copy all of this to GPU anyways, we do not need
+   this data beyond defining it as a means to be copied.
+   Note: this vertices data is already in screen coordinates,
+   therefore, it is meant only for the fragment shader
+   (i.e. no need for vertex processing)
+  */
+  std::vector<ld_o::VBO_STRUCT> t_data;
+  load_obj(infile, t_data);
 
+  g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);
   glfwInit();
   
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -152,18 +167,6 @@ int main(int argc, char *argv[]) {
     printf("FAILED TO LOAD GLAD!\n"); 
     return EXIT_FAILURE;
   }
-
-  /*
-   we can define this locally in this function because GL
-   will copy all of this to GPU anyways, we do not need
-   this data beyond defining it as a means to be copied.
-   Note: this vertices data is already in screen coordinates,
-   therefore, it is meant only for the fragment shader
-   (i.e. no need for vertex processing)
-  */
-  std::vector<ld_o::VBO_STRUCT> t_data;
-  load_obj("../cube2.obj", t_data);
-  print_vbo(t_data);
 
   GLuint VAO, prog_id;
   bind_vao(t_data, VAO);
@@ -220,6 +223,7 @@ int main(int argc, char *argv[]) {
     }
   );
   
+  glEnable(GL_DEPTH_TEST);
   time_p tic, toc;
   duration<int, std::milli> fps(MAX_MS_PER_FRAME);
   while (!glfwWindowShouldClose(window)) {
