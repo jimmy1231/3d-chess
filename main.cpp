@@ -51,7 +51,7 @@
  * e : eye position
  * t : "up" vector (in world coordinates)
  */
-glm::vec3 e(2, 2, 3);
+glm::vec3 e(10, 10, 14);
 glm::vec3 g;
 glm::vec3 t(0,1,0);
 
@@ -228,6 +228,7 @@ int main(int argc, char *argv[]) {
   duration<int, std::milli> fps(MAX_MS_PER_FRAME);
   while (!glfwWindowShouldClose(window)) {
     tic = clock::now();
+    glClearColor(46.0f/255.0f, 56.0f/255.0f, 71.0f/255.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Bind the shaders
