@@ -1,4 +1,4 @@
-# 3d-chess
+# RENDER
 
 ![Stanford Dragon](images/stanford-dragon.png)
 
