@@ -56,9 +56,9 @@ glm::vec3 g;
 glm::vec3 t(0,1,0);
 
 GLfloat p = 100;
-glm::vec3 light(1,1,1);
+glm::vec3 light(100,40,50);
 glm::vec3 intensity(0.7f,0.7f,0.7f);
-glm::vec3 Ia(0.1f,0.1f,0.1f);
+glm::vec3 Ia(0.3f,0.3f,0.3f);
 glm::vec3 kd(0.6f,0.6f,0.6f);
 glm::vec3 ks(0.6f, 0.6f, 0.6f);
 glm::vec3 ka(0.3f,0.3f,0.3f);

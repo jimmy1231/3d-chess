@@ -11,6 +11,7 @@
 #define SPACE_CHAR " "
 #define SLASH_CHAR "/"
 #define GLM_VEC3_ZERO glm::vec3(0.0f,0.0f,0.0f)
+#define INVALID_FACE_ID 2147483647
 
 namespace ld_o {
   typedef struct V { /* Vertices */ 
@@ -99,10 +100,12 @@ ld_o::Face handle_f(std::list<std::string> &chks) {
 
   std::list<int> v, vt, vn;
   std::string chk;
-  int ind;
   while (chks.size() > 0) {
     chk = chks.front();
     chks.pop_front();
+    if (chk.length() < 3) {
+      continue;
+    }
 
     ld_o::F *f;
     f = (ld_o::F *)malloc(sizeof(ld_o::F));
@@ -131,14 +134,24 @@ ld_o::Face handle_f(std::list<std::string> &chks) {
         ptr = &f->vt;
       else if (cnt == 2)
         ptr = &f->vn;
+      else
+        break;
       
       if (i != j) {
+        std::string substr;
         int c;
-        c = std::stof(chk.substr(i, j-i));
+        try {
+          substr = chk.substr(i, j-i);
+          c = std::stof(substr);
+        } catch (const std::exception &e) {
+          printf("stof exception: [%d]: %s\n", 
+            cnt, substr.c_str());
+          c = INVALID_FACE_ID;
+        }
         *ptr = c;
       } else {
         /* Set to -1.0 if not applicable */
-        *ptr = -1.0f;
+        *ptr = INVALID_FACE_ID;
       }
 
       cnt++;
@@ -235,7 +248,9 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
 
       std::string chk;
       chk = _s.substr(i, j-i);
-      chks.push_back(chk);
+      if (chk != SPACE_CHAR && chk != "") {
+        chks.push_back(chk);
+      }
       
       /* Skip the space */
       i = j+1;
@@ -283,26 +298,37 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
         V *v;
         VT *vt;
         VN *vn;
+        /* 
+         * For some reason, there are .obj files with 
+         * negative face indices. According to the specification:
+         *
+         *  "If an index is negative then it relatively refers 
+         *   to the end of the vertex list, -1 referring to the
+         *   last element."
+         */
         v_id = face_v->v;
         vt_id = face_v->vt;
         vn_id = face_v->vn;
-
-        if (v_id != -1.0f) {
-          V *v = v_list[face_v->v - 1];
+        v_id = v_id >= 0 ? v_id : v_list.size()+v_id+1;
+        vt_id = vt_id >= 0 ? vt_id : vt_list.size()+vt_id+1;
+        vn_id = vn_id >= 0 ? vn_id : vn_list.size()+vn_id+1;
+        
+        if (v_id != INVALID_FACE_ID) {
+          V *v = v_list[v_id - 1];
           s_vbo.v = glm::vec3(v->x, v->y, v->z);
         } else {
           s_vbo.v = GLM_VEC3_ZERO;
         }
 
-        if (vt_id != -1.0f) {
-          VT *vt = vt_list[face_v->vt - 1];
+        if (vt_id != INVALID_FACE_ID) {
+          VT *vt = vt_list[vt_id - 1];
           s_vbo.t = glm::vec3(vt->u, vt->v, vt->w);
         } else {
           s_vbo.t = GLM_VEC3_ZERO;
         }
 
-        if (vn_id != -1.0f) {
-          VN *vn = vn_list[face_v->vn - 1];
+        if (vn_id != INVALID_FACE_ID) {
+          VN *vn = vn_list[vn_id - 1];
           s_vbo.n = glm::vec3(vn->x, vn->y, vn->z);
         } else {
           s_vbo.n = GLM_VEC3_ZERO;
