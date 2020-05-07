@@ -61,7 +61,7 @@ glm::vec3 intensity(0.7f,0.7f,0.7f);
 glm::vec3 Ia(0.1f,0.1f,0.1f);
 glm::vec3 kd(0.6f,0.6f,0.6f);
 glm::vec3 ks(0.6f, 0.6f, 0.6f);
-glm::vec3 ka(1.0f,1.0f,1.0f);
+glm::vec3 ka(0.3f,0.3f,0.3f);
 
 glm::mat4 M_per, M_cam;
 glm::vec2 *last_cursor_pos = NULL;

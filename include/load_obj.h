@@ -10,6 +10,7 @@
 
 #define SPACE_CHAR " "
 #define SLASH_CHAR "/"
+#define GLM_VEC3_ZERO glm::vec3(0.0f,0.0f,0.0f)
 
 namespace ld_o {
   typedef struct V { /* Vertices */ 
@@ -123,9 +124,6 @@ ld_o::Face handle_f(std::list<std::string> &chks) {
         j = chk.length();
       }
 
-      int c;
-      c = std::stof(chk.substr(i, j-i));
-
       int *ptr;
       if (cnt == 0)
         ptr = &f->v;
@@ -133,8 +131,15 @@ ld_o::Face handle_f(std::list<std::string> &chks) {
         ptr = &f->vt;
       else if (cnt == 2)
         ptr = &f->vn;
-
-      *ptr = i != j ? c : -1.0f; /* Set to -1.0 if not applicable */
+      
+      if (i != j) {
+        int c;
+        c = std::stof(chk.substr(i, j-i));
+        *ptr = c;
+      } else {
+        /* Set to -1.0 if not applicable */
+        *ptr = -1.0f;
+      }
 
       cnt++;
       i = j+1;
@@ -274,13 +279,34 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
          * Need "-1" because .obj files indices begin at 1
          * (rather than 0, as is the vector)
          */
-        V *v = v_list[face_v->v - 1];
-        VT *vt = vt_list[face_v->vt - 1];
-        VN *vn = vn_list[face_v->vn - 1];
+        int v_id, vt_id, vn_id;
+        V *v;
+        VT *vt;
+        VN *vn;
+        v_id = face_v->v;
+        vt_id = face_v->vt;
+        vn_id = face_v->vn;
 
-        s_vbo.v = glm::vec3(v->x, v->y, v->z);
-        s_vbo.n = glm::vec3(vn->x, vn->y, vn->z);
-        s_vbo.t = glm::vec3(vt->u, vt->v, vt->w);
+        if (v_id != -1.0f) {
+          V *v = v_list[face_v->v - 1];
+          s_vbo.v = glm::vec3(v->x, v->y, v->z);
+        } else {
+          s_vbo.v = GLM_VEC3_ZERO;
+        }
+
+        if (vt_id != -1.0f) {
+          VT *vt = vt_list[face_v->vt - 1];
+          s_vbo.t = glm::vec3(vt->u, vt->v, vt->w);
+        } else {
+          s_vbo.t = GLM_VEC3_ZERO;
+        }
+
+        if (vn_id != -1.0f) {
+          VN *vn = vn_list[face_v->vn - 1];
+          s_vbo.n = glm::vec3(vn->x, vn->y, vn->z);
+        } else {
+          s_vbo.n = GLM_VEC3_ZERO;
+        }
         
         /* Vector performs deep copy on T */
         data.push_back(s_vbo);
