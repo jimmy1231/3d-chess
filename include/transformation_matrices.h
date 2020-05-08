@@ -115,7 +115,6 @@ void init_per_mat(const GLfloat &bot,
     1400.0f/900.0f,
     0.1f, 100.0f 
   );
-  print_mat4("M_per adjusted:", M_per);
 }
 
 /*
