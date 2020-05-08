@@ -216,6 +216,7 @@ void print_vbo(const std::vector<ld_o::VBO_STRUCT> &data) {
 }
 
 void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
+  printf("Loading %s\n", filepath.c_str());
   std::ifstream infile(filepath);
   if (!infile.is_open()) {
     std::cout << "File does not exist!" << std::endl;
@@ -356,6 +357,9 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
     int j;
     for (j=0; j<f.size(); j++) free(f[j]);
   }
+  
+  printf("Loading complete: %d vertices -> %d triangles\n",
+    (int)data.size(), (int)data.size()/3);
 }
 
 #endif /* GCC_TEST_LOAD_OBJ */

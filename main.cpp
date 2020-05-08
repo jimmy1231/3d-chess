@@ -56,9 +56,9 @@ glm::vec3 g;
 glm::vec3 t(0,1,0);
 
 GLfloat p = 100;
-int num_lights = 2;
-glm::vec3 lights[2] = {{100,40,50},{-100,40,50}};
-glm::vec3 intensity(0.7f,0.7f,0.7f);
+GLint num_lights = 3;
+glm::vec3 lights[3] = {{100,40,50},{-100,40,50},{100,40,-50}};
+glm::vec3 intensity[3] = {{0.9f,0.9f,0.9f},{0.2f,0.2f,0.2f},{0.2f,0.2f,0.2f}};
 glm::vec3 Ia(0.3f,0.3f,0.3f);
 glm::vec3 kd(0.6f,0.6f,0.6f);
 glm::vec3 ks(0.6f, 0.6f, 0.6f);
@@ -175,8 +175,8 @@ int main(int argc, char *argv[]) {
   ShaderProg vs, fs;
   GLuint shader_ids[2];
   {
-    vs.shader_name = "../glp/passthrough.vs";
-    fs.shader_name = "../glp/passthrough.fs";
+    vs.shader_name = "../glsl/model-view-proj.vs";
+    fs.shader_name = "../glsl/per-frag-blinn-phong.fs";
     vs.type = GL_VERTEX_SHADER;
     fs.type = GL_FRAGMENT_SHADER;
     load_shader_prog(vs);
@@ -199,11 +199,7 @@ int main(int argc, char *argv[]) {
   */
   init_per_mat(-1,1,-1,1,0.1f, 100.0f,M_per);
   init_camera_mat(g, t, e, M_cam);
-  std::cout << "Program: " << prog_id << std::endl;
-  std::cout << "Num vertices: " << t_data.size() << std::endl;
-  std::cout << "VS: " << shader_ids[0] << std::endl;
-  std::cout << "FS: " << shader_ids[1] << std::endl;
-
+  std::cout << "Program ID: " << prog_id << std::endl;
   glfwSetScrollCallback(
     window,
     [](GLFWwindow *window, double xoffset, double yoffset) {
@@ -261,7 +257,7 @@ int main(int argc, char *argv[]) {
     glUniform3fv(ka_id, 1, glm::value_ptr(ka));
     glUniform3fv(light_id, num_lights, (const GLfloat *)lights);
     glUniform1i(num_lights_id, num_lights_id);
-    glUniform3fv(intensity_id, 1, glm::value_ptr(intensity));
+    glUniform3fv(intensity_id, 3, (const GLfloat *)intensity);
     glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
     glUniform1f(p_id, p);
 

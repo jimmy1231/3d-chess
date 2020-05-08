@@ -1,5 +1,5 @@
 #version 330 core
-#define MAX_NUM_LIGHTS 100
+#define MAX_NUM_LIGHTS 4 
 
 out vec3 vColor;
 /* All in world coordinates */
@@ -46,7 +46,8 @@ void main(void) {
 
   vec3 l, h;
   int i;
-  for (i=0; i<num_lights; i++) {
+  int bound = min(num_lights, MAX_NUM_LIGHTS);
+  for (i=0; i<bound; i++) {
     vec3 l = normalize(lights[i]-pos);
     vec3 h = normalize(v+l);
     vLights[i] = l;
