@@ -344,6 +344,18 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
       i += 2;
     }
   }
+
+  /* Free all used memory */
+  int i;
+  for (i=0; i<v_list.size(); i++) free(v_list[i]);
+  for (i=0; i<vt_list.size(); i++) free(vt_list[i]);
+  for (i=0; i<vn_list.size(); i++) free(vn_list[i]);
+  for (i=0; i<vp_list.size(); i++) free(vp_list[i]);
+  for (i=0; i<f_list.size(); i++) {
+    Face f = f_list[i];
+    int j;
+    for (j=0; j<f.size(); j++) free(f[j]);
+  }
 }
 
 #endif /* GCC_TEST_LOAD_OBJ */
