@@ -6,3 +6,5 @@ gcc-test
 *.swp
 glm/
 *.swo
+*.obj
+*.mtl
