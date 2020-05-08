@@ -1,17 +1,19 @@
 #version 330 core
+#define MAX_NUM_LIGHTS 100
 
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vEye;
-in vec3 vHalf;
-in vec3 vLight;
+in vec3 vHalf[MAX_NUM_LIGHTS];
+in vec3 vLights[MAX_NUM_LIGHTS];
 
 uniform vec3 Ia;
 uniform vec3 ka;
 uniform vec3 kd;
 uniform vec3 ks;
 uniform float p;
+uniform int num_lights;
 uniform vec3 intensity;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
@@ -50,15 +52,22 @@ void main(void) {
   vec3 S;
   vec3 A;
 
-  vec3 n = normalize(vNormal);
-  vec3 l = normalize(vLight);
-  vec3 v = normalize(vEye);
-  vec3 h = normalize(vHalf);
+  vec3 c = vec3(0,0,0);
+  vec3 l, n, v, h;
+  int i;
+  for (i=0; i<num_lights; i++) {
+    n = normalize(vNormal);
+    l = normalize(vLights[i]);
+    v = normalize(vEye);
+    h = normalize(vHalf[i]);
 
-  L = kd * intensity * max(0, dot(n, l)); 
-  S = ks * intensity * pow(max(0, dot(n, h)), p); 
-  A = Ia;
+    L = kd * intensity * max(0, dot(n, l)); 
+    S = ks * intensity * pow(max(0, dot(n, h)), p); 
 
-  vec3 c = minf3(vec3(1,1,1), A+L+S);
+    c += (L+S);
+  }
+
+  A = ka * Ia;
+  c = minf3(vec3(1,1,1), A+c);
   out_Fragmentcolor = vec4(c.xyz, 1.0);
 }

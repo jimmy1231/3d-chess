@@ -1,11 +1,12 @@
 #version 330 core
+#define MAX_NUM_LIGHTS 100
 
 out vec3 vColor;
 /* All in world coordinates */
 out vec3 vNormal;
 out vec3 vEye;
-out vec3 vHalf;
-out vec3 vLight;
+out vec3 vHalf[MAX_NUM_LIGHTS];
+out vec3 vLights[MAX_NUM_LIGHTS];
 
 layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
@@ -13,7 +14,8 @@ layout(location = 1) in vec3 in_Normal;
 uniform mat4 M_per;
 uniform mat4 M_cam;
 uniform vec3 eye;
-uniform vec3 light;
+uniform int num_lights;
+uniform vec3 lights[MAX_NUM_LIGHTS];
 
 void main(void) {
   /*
@@ -41,12 +43,17 @@ void main(void) {
    */
   vec3 pos = in_Position.xyz;
   vec3 v = normalize(eye-pos);
-  vec3 l = normalize(light-pos);
-  vec3 h = normalize(v+l);
+
+  vec3 l, h;
+  int i;
+  for (i=0; i<num_lights; i++) {
+    vec3 l = normalize(lights[i]-pos);
+    vec3 h = normalize(v+l);
+    vLights[i] = l;
+    vHalf[i] = h;
+  }
    
   vEye = v;
-  vHalf = h;
-  vLight = l;
 
   // Calculate screen coordinates for input vertex
   vec4 _pos = M_per*M_cam*vec4(pos, 1.0);

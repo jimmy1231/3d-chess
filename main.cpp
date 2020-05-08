@@ -56,7 +56,8 @@ glm::vec3 g;
 glm::vec3 t(0,1,0);
 
 GLfloat p = 100;
-glm::vec3 light(100,40,50);
+int num_lights = 2;
+glm::vec3 lights[2] = {{100,40,50},{-100,40,50}};
 glm::vec3 intensity(0.7f,0.7f,0.7f);
 glm::vec3 Ia(0.3f,0.3f,0.3f);
 glm::vec3 kd(0.6f,0.6f,0.6f);
@@ -238,13 +239,15 @@ int main(int argc, char *argv[]) {
     GLint M_proj_id, M_per_id, M_cam_id;
     GLint ks_id, kd_id, ka_id;
     GLint light_id, intensity_id, Ia_id;
+    GLint num_lights_id;
     GLint p_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
     ka_id = glGetUniformLocation(prog_id, "ka");
-    light_id = glGetUniformLocation(prog_id, "light");
+    light_id = glGetUniformLocation(prog_id, "lights");
+    num_lights_id = glGetUniformLocation(prog_id, "num_lights");
     intensity_id = glGetUniformLocation(prog_id, "intensity");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
@@ -256,7 +259,8 @@ int main(int argc, char *argv[]) {
     glUniform3fv(ks_id, 1, glm::value_ptr(ks));
     glUniform3fv(kd_id, 1, glm::value_ptr(kd));
     glUniform3fv(ka_id, 1, glm::value_ptr(ka));
-    glUniform3fv(light_id, 1, glm::value_ptr(light));
+    glUniform3fv(light_id, num_lights, (const GLfloat *)lights);
+    glUniform1i(num_lights_id, num_lights_id);
     glUniform3fv(intensity_id, 1, glm::value_ptr(intensity));
     glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
     glUniform1f(p_id, p);
