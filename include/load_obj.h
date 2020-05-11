@@ -11,6 +11,7 @@
 #define SPACE_CHAR " "
 #define SLASH_CHAR "/"
 #define GLM_VEC3_ZERO glm::vec3(0.0f,0.0f,0.0f)
+#define GLM_VEC2_ZERO glm::vec2(0.0f,0.0f)
 #define INVALID_FACE_ID 2147483647
 
 namespace ld_o {
@@ -48,7 +49,7 @@ namespace ld_o {
   typedef struct VBO_STRUCT {
     glm::vec3 v;
     glm::vec3 n;
-    glm::vec3 t;
+    glm::vec2 t;
   } VBO_STRUCT;
 
   typedef std::vector<F *> Face;
@@ -211,7 +212,7 @@ void print_vbo(const std::vector<ld_o::VBO_STRUCT> &data) {
     printf("[%d]\n", i);
     print_vec3("\tv:", v->v);
     print_vec3("\tn:", v->n);
-    print_vec3("\tt:", v->t);
+    print_vec2("\tt:", v->t);
   }
 }
 
@@ -323,9 +324,9 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
 
         if (vt_id != INVALID_FACE_ID) {
           VT *vt = vt_list[vt_id - 1];
-          s_vbo.t = glm::vec3(vt->u, vt->v, vt->w);
+          s_vbo.t = glm::vec2(vt->u, vt->v);
         } else {
-          s_vbo.t = GLM_VEC3_ZERO;
+          s_vbo.t = GLM_VEC2_ZERO;
         }
 
         if (vn_id != INVALID_FACE_ID) {
@@ -358,6 +359,7 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
     for (j=0; j<f.size(); j++) free(f[j]);
   }
   
+  print_vbo(data);
   printf("Loading complete: %d vertices -> %d triangles\n",
     (int)data.size(), (int)data.size()/3);
 }

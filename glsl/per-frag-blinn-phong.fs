@@ -4,6 +4,7 @@
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
 in vec3 vColor;
 in vec3 vNormal;
+in vec2 vTex; 
 in vec3 vEye;
 in vec3 vHalf[MAX_NUM_LIGHTS];
 in vec3 vLights[MAX_NUM_LIGHTS];
@@ -15,6 +16,7 @@ uniform vec3 ks;
 uniform float p;
 uniform int num_lights;
 uniform vec3 intensity[MAX_NUM_LIGHTS];
+uniform sampler2D tex;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
 
@@ -52,6 +54,7 @@ void main(void) {
   vec3 S;
   vec3 A;
 
+  vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
   int i;
@@ -62,7 +65,7 @@ void main(void) {
     h = normalize(vHalf[i]);
     l = normalize(vLights[i]);
 
-    L = kd * intensity[i] * max(0, dot(n, l)); 
+    L = kdTexel * intensity[i] * max(0, dot(n, l)); 
     S = ks * intensity[i] * pow(max(0, dot(n, h)), p); 
 
     c += (L+S);

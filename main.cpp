@@ -18,6 +18,7 @@
  So, when we call glCompileProgram(), it is actually invoking
  the glad_glCompileProgram function 
 */
+#include <CImg/CImg.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/mat4x4.hpp>
@@ -31,8 +32,10 @@
 #include "ShaderProg.h"
 #include "load_shader_prog.h"
 #include "bind_vao.h"
+#include "bind_tex.h"
 #include "transformation_matrices.h"
 #include "load_obj.h"
+#include "load_tex.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
 #define FPS 60 
@@ -147,7 +150,11 @@ int main(int argc, char *argv[]) {
    (i.e. no need for vertex processing)
   */
   std::vector<ld_o::VBO_STRUCT> t_data;
+  unsigned char *tex_data;
+  int tex_width, tex_height;
   load_obj(infile, t_data);
+  tex_data = load_tex("../images/stanford-dragon.png",
+    tex_width, tex_height);
 
   g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);
   glfwInit();
@@ -170,7 +177,10 @@ int main(int argc, char *argv[]) {
   }
 
   GLuint VAO, prog_id;
+  GLuint TEX;
   bind_vao(t_data, VAO);
+  bind_tex(tex_data, tex_width, tex_height, TEX);
+  free(tex_data);
   std::vector<ShaderProg *> shader_progs;
   ShaderProg vs, fs;
   GLuint shader_ids[2];
@@ -237,6 +247,7 @@ int main(int argc, char *argv[]) {
     GLint light_id, intensity_id, Ia_id;
     GLint num_lights_id;
     GLint p_id;
+    GLint tex_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
     ks_id = glGetUniformLocation(prog_id, "ks");
@@ -247,6 +258,7 @@ int main(int argc, char *argv[]) {
     intensity_id = glGetUniformLocation(prog_id, "intensity");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
+    tex_id = glGetUniformLocation(tex_id, "tex");
 
     // Send uniform variables to device
     init_camera_mat(g, t, e, M_cam);
@@ -260,12 +272,16 @@ int main(int argc, char *argv[]) {
     glUniform3fv(intensity_id, 3, (const GLfloat *)intensity);
     glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
     glUniform1f(p_id, p);
+    glUniform1i(tex_id, 0);
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, TEX);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, t_data.size());
-    glBindVertexArray(0);
 
     // Unbind the shaders
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
     glUseProgram(0);
 
     glfwSwapBuffers(window);

@@ -19,12 +19,15 @@ void load_shader_prog(ShaderProg &prog) {
   std::stringstream buf;
   buf << ifs.rdbuf();
   
-  std::string str = buf.str();
+  std::string str;
+  str = buf.str();
   size_t len = str.size();
   const char *prog_str = str.c_str();
 
-  prog.glsl_code = (GLchar *)malloc(len*sizeof(GLchar));
+  prog.glsl_code = (GLchar *)malloc((len+1)*sizeof(GLchar));
   strcpy((char *)prog.glsl_code, prog_str);  
+  std::cout << "Loaded shader: " << prog.shader_name << std::endl;
+  return;
 }
 
 #endif

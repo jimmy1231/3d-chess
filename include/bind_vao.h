@@ -91,7 +91,7 @@ void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
   glEnableVertexAttribArray(2);
   glVertexAttribPointer(
     2,                    /* Position (layout) 1 */
-    3,                    /* Number of components per vertex attrib */
+    2,                    /* Number of components per vertex attrib */
     GL_FLOAT,             /* Type of each vertex attrib - GLfloat */
     GL_FALSE,             /* Is normalized? - no */
     sizeof(ld_o::VBO_STRUCT), /* Stride: byte offset b/w consecutive vertex attribs */

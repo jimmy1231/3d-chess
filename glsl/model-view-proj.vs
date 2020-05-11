@@ -4,12 +4,14 @@
 out vec3 vColor;
 /* All in world coordinates */
 out vec3 vNormal;
+out vec2 vTex;
 out vec3 vEye;
 out vec3 vHalf[MAX_NUM_LIGHTS];
 out vec3 vLights[MAX_NUM_LIGHTS];
 
 layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
+layout(location = 2) in vec2 in_Tex;
 
 uniform mat4 M_per;
 uniform mat4 M_cam;
@@ -25,6 +27,7 @@ void main(void) {
    */
   vColor = vec3(0.5,0.5,0.5);
   vNormal = in_Normal;
+  vTex = in_Tex;
   
   /*
    * Specify v, l, h vectors per-vertex as output of the
