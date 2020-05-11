@@ -2,6 +2,7 @@ glfw/
 gcc-test
 *.o
 cmake-build/
+cmake-build-debug/
 gcc-test
 *.swp
 glm/

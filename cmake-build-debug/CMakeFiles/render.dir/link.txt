@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11 -g   CMakeFiles/render.dir/main.cpp.o  -o render glfw/src/libglfw3.a glad/libglad.a /usr/lib/x86_64-linux-gnu/libGL.so /usr/lib/x86_64-linux-gnu/librt.so -lm /usr/lib/x86_64-linux-gnu/libX11.so -lpthread -ldl 
