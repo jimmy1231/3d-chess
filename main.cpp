@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
   unsigned char *tex_data;
   int tex_width, tex_height;
   load_obj(infile, t_data);
-  tex_data = load_tex("../images/stanford-dragon.png",
+  tex_data = load_tex("../tex/cube-tex.png",
     tex_width, tex_height);
 
   g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);

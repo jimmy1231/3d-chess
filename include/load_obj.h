@@ -359,7 +359,6 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
     for (j=0; j<f.size(); j++) free(f[j]);
   }
   
-  print_vbo(data);
   printf("Loading complete: %d vertices -> %d triangles\n",
     (int)data.size(), (int)data.size()/3);
 }

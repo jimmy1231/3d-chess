@@ -3,6 +3,7 @@ gcc-test
 *.o
 cmake-build/
 cmake-build-debug/
+cmake-build-release/
 gcc-test
 *.swp
 glm/
