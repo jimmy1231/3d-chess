@@ -202,8 +202,8 @@ int main(int argc, char *argv[]) {
     shadow.shadow_map(shadow_prog_id, data, gaze, t, light);
   }
 
-  Texture tex1("../tex/pink.jpg");
-  Texture tex2("../tex/cube-tex.png");
+  Texture tex1("../tex/cube-tex.png");
+  Texture tex2("../tex/cube-tex2.png");
   tex1.bind2D_RGB();
   tex2.bind2D_RGB();
 
@@ -273,8 +273,8 @@ int main(int argc, char *argv[]) {
     intensity_id = glGetUniformLocation(prog_id, "intensity");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
-    tex_id = glGetUniformLocation(tex_id, "tex");
-    shadow_tex_id = glGetUniformLocation(shadow_tex_id, "shadow_tex");
+    tex_id = glGetUniformLocation(prog_id, "tex");
+    shadow_tex_id = glGetUniformLocation(prog_id, "shadow_tex");
 
     // Send uniform variables to device
     init_camera_mat(g, t, e, M_cam);
@@ -289,13 +289,11 @@ int main(int argc, char *argv[]) {
     glUniform3fv(intensity_id, 3, (const GLfloat *)intensity);
     glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
     glUniform1f(p_id, p);
-    glUniform1i(shadow_tex_id, 0);
-    glUniform1i(tex_id, 1);
+    glUniform1i(tex_id, 0);
+    glUniform1i(shadow_tex_id, 1);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex1.id);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, tex2.id);
+    tex1.bind_to_unit(0);
+    tex2.bind_to_unit(1);
     glBindVertexArray(data.vao);
 
     glDrawArrays(GL_TRIANGLES, 0, data.data.size());

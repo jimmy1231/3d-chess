@@ -1,6 +1,7 @@
 #ifndef __RENDER_TEXTURE_H__
 #define __RENDER_TEXTURE_H__
 
+#include <glad/glad.h>
 #include <string>
 #include "transformation_matrices.h"
 #include "_v1/load_tex.h"
@@ -30,6 +31,7 @@ class Texture {
       if (data != NULL) {
         free(data);
       }
+      glDeleteTextures(1, &id);
     }
     void framebuffer() {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
@@ -51,7 +53,22 @@ class Texture {
         height, width, 0, 
         GL_RGB, GL_UNSIGNED_BYTE, data);
 
+      glActiveTexture(0);
       glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    void bind_to_unit(GLuint i) {
+      glActiveTexture(GL_TEXTURE0 + i);
+      {
+        GLint _i;
+        glGetIntegerv(GL_ACTIVE_TEXTURE, &_i);
+        assert(_i == (GL_TEXTURE0 + i));        
+      }
+      glBindTexture(GL_TEXTURE_2D, id);
+      {
+        GLint _i;
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &_i);
+        assert(_i == id);        
+      }
     }
     void shadow_map(const GLuint prog_id,
                     const Data &data,
