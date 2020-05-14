@@ -23,6 +23,11 @@ class Data {
       glGenBuffers(1, &vbo);
       
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      {
+        GLint _vbo;
+        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &_vbo);
+        assert(_vbo == vbo);
+      }
 
       size_t nbytes;
       nbytes = data.size()*sizeof(ld_o::VBO_STRUCT);
@@ -34,6 +39,13 @@ class Data {
       glGenVertexArrays(1, &vao); 
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
       glBindVertexArray(vao);
+      {
+        GLint _vbo, _vao;
+        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &_vbo);
+        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &_vao);
+        assert(_vbo == vbo);
+        assert(_vao == vao);
+      }
       
       size_t stride = sizeof(ld_o::VBO_STRUCT);
       glEnableVertexAttribArray(0);
@@ -50,6 +62,7 @@ class Data {
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindVertexArray(0);
     }
+    void print() { print_vbo(data); }
 };
 
 #endif /* __RENDER_DATA_H__ */

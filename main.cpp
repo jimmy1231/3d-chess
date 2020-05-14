@@ -177,6 +177,7 @@ int main(int argc, char *argv[]) {
   };
 
   Data data(argv[1]);
+  data.bind_VAO();
   Texture shadow(NULL, WIDTH_PIXELS, HEIGHT_PIXELS);
   {
     /*
@@ -296,6 +297,7 @@ int main(int argc, char *argv[]) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, tex2.id);
     glBindVertexArray(data.vao);
+
     glDrawArrays(GL_TRIANGLES, 0, data.data.size());
 
     // Unbind the shaders
