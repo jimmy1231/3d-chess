@@ -2,16 +2,18 @@
 #define GCC_TEST_SHADER_PROG
 
 class ShaderProg {
-  std::string shader_name;
-  GLuint type;
-  std::string code;
 	public:
+    std::string filename;
+    GLuint type;
+    std::string code;
+
+    ShaderProg() {}
     ShaderProg(std::string n, GLuint t) 
-      : shader_name(n), type(t)
+      : filename(n), type(t)
     {
-      std::ifstream ifs(n);
+      std::ifstream ifs(filename);
       if (!ifs.is_open()) {
-        printf("Failed to open file: %s\n", prog.shader_name.c_str());
+        printf("Failed to open file: %s\n", filename.c_str());
         exit(1);
       }
 
@@ -19,8 +21,6 @@ class ShaderProg {
       buf << ifs.rdbuf();
       code = buf.str();
     }
-    GLchar **code() { return &code.c_str(); }
-    char *name() { return shader_name.c_str(); }
-}
+};
 
 #endif

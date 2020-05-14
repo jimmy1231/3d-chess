@@ -28,15 +28,11 @@
 #include "helpers.h"
 
 // Custom header files
-#include "bind_tex_fbo.h"
-#include "bind_shaders.h"
 #include "ShaderProg.h"
-#include "load_shader_prog.h"
-#include "bind_vao.h"
-#include "bind_tex.h"
+#include "Data.h"
+#include "Texture.h"
+#include "bind_shaders.h"
 #include "transformation_matrices.h"
-#include "load_obj.h"
-#include "load_tex.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
 #define FPS 60 
@@ -149,7 +145,6 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
   g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);
-  Data data(argv[1]);
 
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -162,8 +157,6 @@ int main(int argc, char *argv[]) {
     "OpenGL", NULL, NULL) ;
   glfwMakeContextCurrent(window);
 
-  // glad dynamically discovers and binds all openGL functions
-  // so we can call them (e.g. glUseProgram) 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     printf("FAILED TO LOAD GLAD!\n"); 
     return EXIT_FAILURE;
@@ -175,14 +168,16 @@ int main(int argc, char *argv[]) {
     GLuint prog_id;
     std::vector<ShaderProg> progs;
     ShaderProg vs, fs;
-    vs = {nfs, GL_VERTEX_SHADER};
-    fs = {, GL_FRAGMENT_SHADER};
+    vs = {nvs, GL_VERTEX_SHADER};
+    fs = {nfs, GL_FRAGMENT_SHADER};
     progs.push_back(vs);
     progs.push_back(fs);
     bind_shaders(progs, prog_id);
     return prog_id;
   };
 
+  Data data(argv[1]);
+  Texture shadow(NULL, WIDTH_PIXELS, HEIGHT_PIXELS);
   {
     /*
      * Load shadow by pre-rendering shadow map into a 
@@ -196,11 +191,9 @@ int main(int argc, char *argv[]) {
      * unless objects/lights in our scene moves, in which
      * case we need to re-render the shadow map.
      */
-    GLuint prog = ld_shaders = ld_shaders(
+    GLuint shadow_prog_id = ld_shaders(
       "../glsl/shadow-map.vs",
       "../glsl/shadow-map.fs");
-
-    Texture shadow(NULL, WIDTH_PIXELS, HEIGHT_PIXELS);
     shadow.framebuffer();
 
     glm::vec3 light = lights[0];
@@ -225,11 +218,9 @@ int main(int argc, char *argv[]) {
    * reuse it.
   */
   GLuint prog_id = ld_shaders(
-    "../glsl/model-view-proj.vs", 
+    "../glsl/model-view-proj.vs",
     "../glsl/per-frag-blinn-phong.fs");
 
-  init_per_mat(WIDTH_PIXELS, HEIGHT_PIXELS,
-    0.1f, 100.0f, 30.0f, M_per);
   glfwSetScrollCallback(
     window,
     [](GLFWwindow *window, double xoffset, double yoffset) {
@@ -250,6 +241,8 @@ int main(int argc, char *argv[]) {
     }
   );
   
+  init_per_mat(WIDTH_PIXELS, HEIGHT_PIXELS,
+    0.1f, 100.0f, 30.0f, M_per);
   glEnable(GL_DEPTH_TEST);
   time_p tic, toc;
   duration<int, std::milli> fps(MAX_MS_PER_FRAME);
@@ -286,7 +279,7 @@ int main(int argc, char *argv[]) {
     init_camera_mat(g, t, e, M_cam);
     glUniformMatrix4fv(M_per_id, 1, GL_FALSE, glm::value_ptr(M_per));
     glUniformMatrix4fv(M_cam_id, 1, GL_FALSE, glm::value_ptr(M_cam));
-    glUniformMatrix4fv(M_light_id, 1, GL_FALSE, glm::value_ptr(M_light));
+    glUniformMatrix4fv(M_light_id, 1, GL_FALSE, glm::value_ptr(shadow.view));
     glUniform3fv(ks_id, 1, glm::value_ptr(ks));
     glUniform3fv(kd_id, 1, glm::value_ptr(kd));
     glUniform3fv(ka_id, 1, glm::value_ptr(ka));
@@ -299,11 +292,11 @@ int main(int argc, char *argv[]) {
     glUniform1i(tex_id, 1);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, TEX);
+    glBindTexture(GL_TEXTURE_2D, tex1.id);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, TEX_shadow);
-    glBindVertexArray(data.vao());
-    glDrawArrays(GL_TRIANGLES, 0, data.size());
+    glBindTexture(GL_TEXTURE_2D, tex2.id);
+    glBindVertexArray(data.vao);
+    glDrawArrays(GL_TRIANGLES, 0, data.data.size());
 
     // Unbind the shaders
     glBindTexture(GL_TEXTURE_2D, 0);

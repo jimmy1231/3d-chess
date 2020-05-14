@@ -2,16 +2,19 @@
 #define __RENDER_TEXTURE_H__
 
 #include <string>
+#include "transformation_matrices.h"
+#include "_v1/load_tex.h"
 
 class Texture {
-  unsigned char *data = NULL;
-  std::string file;
-  int width;
-  int height;
-  GLuint fbo_id;
-  GLuint id;
-
   public:
+    unsigned char *data = NULL;
+    std::string file;
+    int width;
+    int height;
+    glm::mat4 per, view;
+    GLuint fbo_id;
+    GLuint id;
+
     Texture(std::string f) : file(f) {
       glGenTextures(1, &id);
       data = load_tex(file, width, height);
@@ -22,15 +25,12 @@ class Texture {
       glGenTextures(1, &id);
       glGenFramebuffers(1, &fbo_id);
     }
-    Texture()
+    Texture() {}
     ~Texture() {
       if (data != NULL) {
         free(data);
       }
     }
-    int height() { return height; }
-    int width() { return width; }
-    GLuint id() { return id; }
     void framebuffer() {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
 
@@ -58,7 +58,6 @@ class Texture {
                     const glm::vec3 &g, 
                     const glm::vec3 &t,
                     const glm::vec3 &e) {
-      glm::mat4 per, view;
       {
         init_camera_mat(g, t, e, view);
         per = glm::perspective(
@@ -75,18 +74,18 @@ class Texture {
       // Bind the shaders
       glUseProgram(prog_id);
       glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
-      glBindVertexArray(data.vao());
+      glBindVertexArray(data.vao);
 
       GLuint per_id, view_id;
-      GLuint light_id;
+      GLuint e_id;
       per_id = glGetUniformLocation(prog_id, "per");
       view_id = glGetUniformLocation(prog_id, "view");
-      light_id = glGetUniformLocation(light_id, "light");
+      e_id = glGetUniformLocation(prog_id, "light");
       glUniformMatrix4fv(per_id, 1, false, glm::value_ptr(per));
       glUniformMatrix4fv(view_id, 1, false, glm::value_ptr(view));
-      glUniform3fv(light_id, 1, glm::value_ptr(light));
+      glUniform3fv(e_id, 1, glm::value_ptr(e));
 
-      glDrawArrays(GL_TRIANGLES, 0, data.size());
+      glDrawArrays(GL_TRIANGLES, 0, data.data.size());
 
       // Resetting GL to defaults
       glBindVertexArray(0);
@@ -94,6 +93,6 @@ class Texture {
       glUseProgram(0);
       glDisable(GL_DEPTH_TEST);
     }
-}
+};
 
 #endif /* __RENDER_TEXTURE_H__ */

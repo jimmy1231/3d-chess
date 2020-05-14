@@ -1,14 +1,16 @@
 #ifndef __RENDER_DATA_H__
 #define __RENDER_DATA_H__
 
-class Data {
-  std::string filename; 
-  std::vector<ld_o::VBO_STRUCT> t_data;
-  GLuint vbo;
-  GLuint vao;
+#include "load_obj.h"
 
+class Data {
   public:
-    Data(char *f) : filenme(f) {
+    std::string filename; 
+    std::vector<ld_o::VBO_STRUCT> data;
+    GLuint vbo;
+    GLuint vao;
+
+    Data(char *f) : filename(f) {
       /*
        we can define this locally in this function because GL
        will copy all of this to GPU anyways, we do not need
@@ -17,19 +19,17 @@ class Data {
        therefore, it is meant only for the fragment shader
        (i.e. no need for vertex processing)
       */
-      load_obj(filename, t_data);
+      load_obj(filename, data);
       glGenBuffers(1, &vbo);
       
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
       size_t nbytes;
-      nbytes = size()*sizeof(ld_o::VBO_STRUCT);
-      glBufferData(GL_ARRAY_BUFFER, nbytes, t_data.data(), GL_STATIC_DRAW);
+      nbytes = data.size()*sizeof(ld_o::VBO_STRUCT);
+      glBufferData(GL_ARRAY_BUFFER, nbytes, data.data(), GL_STATIC_DRAW);
       
       glBindBuffer(GL_ARRAY_BUFFER, 0);      
     }
-    int size() { return t_data.size(); }
-    GLuint vao() { return vao; }
     void bind_VAO() {
       glGenVertexArrays(1, &vao); 
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -50,6 +50,6 @@ class Data {
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindVertexArray(0);
     }
-}
+};
 
 #endif /* __RENDER_DATA_H__ */

@@ -2,7 +2,6 @@
 #define GCC_TEST_LOAD_OBJ
 
 #include <string>
-#include "bind_vao.h"
 #include <fstream>
 #include <iostream>
 #include <list>

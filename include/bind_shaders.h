@@ -13,15 +13,15 @@ bind_shaders(const std::vector<ShaderProg> &shader_progs,
 {
   std::vector<GLuint> shaders;
 
-  ShaderProg shader_prog;
   GLuint s;
   GLint status;
   int i;
   for (i=0; i<shader_progs.size(); i++) {
-    shader_prog = shader_progs[i]; 
+    const ShaderProg *shader_prog = &shader_progs[i]; 
 
-    s = glCreateShader(shader_prog.type);
-    glShaderSource(s, 1, shader_prog.code(), 0);
+    s = glCreateShader(shader_prog->type);
+    GLchar *code = (GLchar *)shader_prog->code.c_str();
+    glShaderSource(s, 1, &code, 0);
     glCompileShader(s);
      
     // Check shader compile status
@@ -34,7 +34,7 @@ bind_shaders(const std::vector<ShaderProg> &shader_progs,
       error_log = (GLchar *)malloc(log_length*sizeof(GLchar));
       glGetShaderInfoLog(s, log_length, &log_length, error_log);
       printf("Shader <%s> failed to compile: %s\n",
-        shader_prog.name(),
+        shader_prog->filename.c_str(),
         error_log);
       
       // clean up error log (free)
@@ -48,7 +48,7 @@ bind_shaders(const std::vector<ShaderProg> &shader_progs,
     } 
     
     printf("shader compiled successfully: %s\n",
-      shader_prog.name());
+      shader_prog->filename.c_str());
     shaders.push_back(s);
   } 
 

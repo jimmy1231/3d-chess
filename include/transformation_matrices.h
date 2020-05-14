@@ -62,10 +62,12 @@ void init_per_mat(const int width, const int height,
    * and right can be derived from the aspect ratio
    * of the screen!
    */
-  M_per = glm::perspective(
-    glm::radians(fov_deg),
-    width/heigth, n, f
-  );
+  float fovy, aspect, zNear, zFar;
+  fovy = glm::radians(fov_deg);
+  aspect = ((float)width) / ((float)height);
+  zNear = n;
+  zFar = f;
+  M_per = glm::perspective(fovy, aspect, zNear, zFar);
 }
 
 /*
