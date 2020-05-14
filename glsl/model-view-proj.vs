@@ -3,6 +3,8 @@
 
 out vec3 vColor;
 /* All in world coordinates */
+out vec2 vShadowTex;
+out float dist;
 out vec3 vNormal;
 out vec2 vTex;
 out vec3 vEye;
@@ -15,6 +17,7 @@ layout(location = 2) in vec2 in_Tex;
 
 uniform mat4 M_per;
 uniform mat4 M_cam;
+uniform mat4 M_light;
 uniform vec3 eye;
 uniform int num_lights;
 uniform vec3 lights[MAX_NUM_LIGHTS];
@@ -28,6 +31,8 @@ void main(void) {
   vColor = vec3(0.5,0.5,0.5);
   vNormal = in_Normal;
   vTex = in_Tex;
+  dist = length(in_Position - vLights[0]);
+  vShadowTex = (M_per * M_light * vec4(in_Position, 1.0)).xy; /* u,v */
   
   /*
    * Specify v, l, h vectors per-vertex as output of the

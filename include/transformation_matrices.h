@@ -30,58 +30,10 @@
  * Inputs:
  *  GLfloat &top : y=top plane 
  */
-void init_per_mat(const GLfloat &bot,
-                    const GLfloat &top,
-                    const GLfloat &left,
-                    const GLfloat &right,
-                    const GLfloat &near,
-                    const GLfloat &far,
-                    glm::mat4 &M_per) {
-  #define r right
-  #define l left
-  #define t top
-  #define b bot
-  #define n near
-  #define f far
-  glm::mat4 M_orth, P;
-  M_orth = glm::transpose(glm::mat4(
-    2/(r-l),       0,       0, -(r+l)/(r-l),
-          0, 2/(t-b),       0, -(t+b)/(t-b),
-          0,       0, 2/(n-f), -(n+f)/(n-f),
-          0,       0,       0,            1
-  ));
-  P = glm::transpose(glm::mat4(
-    n, 0, 0, 0,
-    0, n, 0, 0,
-    0, 0, n+f, -n*f,
-    0, 0, 1, 0
-  ));
-
-  M_per = M_orth * P;
-
-  #if _DEBUG_MAT_LOGS_
-    print_mat4("M_orth:", M_orth);
-    print_mat4("P:", P);
-    print_mat4("M_per:", M_per);
-    print_vec4("M_per*[0 0 -2 1]:", M_per*glm::vec4(0,0,-2,1));
-    print_vec4("P*[0 0 -2 1]:", P*glm::vec4(0,0,-2,1));
-
-    // Check perspective matrix is correct
-    glm::vec4 _t(1,2,3,1);
-    glm::vec4 _r = P * _t;
-    assert(_r[0] == n*_t[0]);
-    assert(_r[1] == n*_t[1]);
-    assert(_r[2] == (n+f)*_t[2]-f*n);
-    assert(_r[3] == _t[2]);
-    
-    assert(M_per == glm::transpose(glm::mat4(
-      (2*n)/(r-l), 0, (l+r)/(l-r), 0,
-      0, (2*n)/(t-b), (b+t)/(b-t), 0,
-      0, 0, (f+n)/(n-f), (2*f*n)/(f-n),
-      0, 0, 1, 0
-    )));
-  #endif
-  
+void init_per_mat(const int width, const int height,
+                  const float n, const float f,
+                  const float fov_deg,
+                  glm::mat4 &M_per) {
   /*
    * Takes care of clipping as well as customized FOV.
    *
@@ -111,9 +63,8 @@ void init_per_mat(const GLfloat &bot,
    * of the screen!
    */
   M_per = glm::perspective(
-    glm::radians(30.0f),
-    1400.0f/900.0f,
-    0.1f, 100.0f 
+    glm::radians(fov_deg),
+    width/heigth, n, f
   );
 }
 

@@ -2,6 +2,8 @@
 #define MAX_NUM_LIGHTS 4 
 
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
+in float dist;
+in vec2 vShadowTex;
 in vec3 vColor;
 in vec3 vNormal;
 in vec2 vTex; 
@@ -17,6 +19,7 @@ uniform float p;
 uniform int num_lights;
 uniform vec3 intensity[MAX_NUM_LIGHTS];
 uniform sampler2D tex;
+uniform sampler2D shadow_tex;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
 
@@ -54,18 +57,20 @@ void main(void) {
   vec3 S;
   vec3 A;
 
+  vec3 shadowTexel = texture(shadow_tex, vTex).rgb;
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
   int i;
   int bound = min(num_lights, MAX_NUM_LIGHTS);
+
   for (i=0; i<bound; i++) {
     n = normalize(vNormal);
     v = normalize(vEye);
     h = normalize(vHalf[i]);
     l = normalize(vLights[i]);
 
-    L = kdTexel * intensity[i] * max(0, dot(n, l)); 
+    L = shadowTexel * intensity[i] * max(0, dot(n, l)); 
     S = ks * intensity[i] * pow(max(0, dot(n, h)), p); 
 
     c += (L+S);

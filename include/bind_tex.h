@@ -6,9 +6,11 @@
 void bind_tex(const unsigned char *data,
 						  const int width,
 						  const int height,
+						  const GLuint textureUnit,
 						  GLuint &TEX) {
 	GLuint _TEX;
 	glGenTextures(1, &_TEX);
+	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, _TEX);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -20,7 +22,6 @@ void bind_tex(const unsigned char *data,
 		height, width, 0, 
 		GL_RGB, GL_UNSIGNED_BYTE, data);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
 	TEX = _TEX;
 	printf("Initialized texture\n");
 }

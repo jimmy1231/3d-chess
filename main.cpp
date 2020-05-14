@@ -28,6 +28,7 @@
 #include "helpers.h"
 
 // Custom header files
+#include "bind_tex_fbo.h"
 #include "bind_shaders.h"
 #include "ShaderProg.h"
 #include "load_shader_prog.h"
@@ -110,9 +111,6 @@ void window_callback_cursor_pos(float xpos, float ypos) {
   #define curr curr_cursor_pos
   #define prev last_cursor_pos
   glm::vec2 delta = curr-(*prev);
-  if (delta.x == 0) {
-    return;
-  }
 
   /*
    * left (delta.x < 0) -> clockwise
@@ -120,13 +118,23 @@ void window_callback_cursor_pos(float xpos, float ypos) {
    * Treat delta.x (in pixels) as degrees - see how it works out
    *  - add a little smoothing by capping the angle
    */
-  float rad;
-  rad = fmin((float)(DEG_TO_RAD * -delta.x)/20.0f, 0.5f);
   
   // Rotate about y-axis by rad
+  float rad;
+  glm::vec3 axis;
   glm::mat3 R;
-  R = gcc_test::rot_about(rad, glm::vec3(0,1,0));
+  if (fabs(delta.x) > fabs(delta.y)) { 
+    rad = fmin((float)(DEG_TO_RAD * -delta.x)/20.0f, 0.5f);
+    axis = glm::vec3(0,1,0);
+  } else {
+    rad = fmin((float)(DEG_TO_RAD * -delta.y)/20.0f, 0.5f);
+
+    // Rotate about 
+    glm::vec3 u(glm::cross(g,t));
+    axis = normalize(u);
+  }
   
+  R = gcc_test::rot_about(rad, axis);
   e = R*e;
   g = glm::normalize(
     glm::vec3(0.0f,0.0f,0.0f)-e);
@@ -140,25 +148,10 @@ int main(int argc, char *argv[]) {
     std::cout << "Please specify input file" << std::endl;
     exit(0);
   }
-  std::string infile(argv[1]);
-  /*
-   we can define this locally in this function because GL
-   will copy all of this to GPU anyways, we do not need
-   this data beyond defining it as a means to be copied.
-   Note: this vertices data is already in screen coordinates,
-   therefore, it is meant only for the fragment shader
-   (i.e. no need for vertex processing)
-  */
-  std::vector<ld_o::VBO_STRUCT> t_data;
-  unsigned char *tex_data;
-  int tex_width, tex_height;
-  load_obj(infile, t_data);
-  tex_data = load_tex("../tex/cube-tex.png",
-    tex_width, tex_height);
-
   g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);
+  Data data(argv[1]);
+
   glfwInit();
-  
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -176,25 +169,49 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  GLuint VAO, prog_id;
-  GLuint TEX;
-  bind_vao(t_data, VAO);
-  bind_tex(tex_data, tex_width, tex_height, TEX);
-  free(tex_data);
-  std::vector<ShaderProg *> shader_progs;
-  ShaderProg vs, fs;
-  GLuint shader_ids[2];
+  auto ld_shaders = [](const char *nvs, const char *nfs)
+    -> GLuint {
+    // Load shadow map shaders
+    GLuint prog_id;
+    std::vector<ShaderProg> progs;
+    ShaderProg vs, fs;
+    vs = {nfs, GL_VERTEX_SHADER};
+    fs = {, GL_FRAGMENT_SHADER};
+    progs.push_back(vs);
+    progs.push_back(fs);
+    bind_shaders(progs, prog_id);
+    return prog_id;
+  };
+
   {
-    vs.shader_name = "../glsl/model-view-proj.vs";
-    fs.shader_name = "../glsl/per-frag-blinn-phong.fs";
-    vs.type = GL_VERTEX_SHADER;
-    fs.type = GL_FRAGMENT_SHADER;
-    load_shader_prog(vs);
-    load_shader_prog(fs);
-    shader_progs.push_back(&vs);
-    shader_progs.push_back(&fs);
+    /*
+     * Load shadow by pre-rendering shadow map into a 
+     * texture framebuffer proxy. After this pre-render.
+     * Since we bind the shadow map texture to the 
+     * framebuffer, the resulting render (i.e. shadow
+     * map) will be stored in a GPU buffer referenced by
+     * our texture.
+     * We can then use this texture to generate shadows
+     * in our main render. Shadow map need not change
+     * unless objects/lights in our scene moves, in which
+     * case we need to re-render the shadow map.
+     */
+    GLuint prog = ld_shaders = ld_shaders(
+      "../glsl/shadow-map.vs",
+      "../glsl/shadow-map.fs");
+
+    Texture shadow(NULL, WIDTH_PIXELS, HEIGHT_PIXELS);
+    shadow.framebuffer();
+
+    glm::vec3 light = lights[0];
+    glm::vec3 gaze = glm::vec3(0,0,0) - light;
+    shadow.shadow_map(shadow_prog_id, data, gaze, t, light);
   }
-  bind_shaders(shader_progs, prog_id, shader_ids);
+
+  Texture tex1("../tex/pink.jpg");
+  Texture tex2("../tex/cube-tex.png");
+  tex1.bind2D_RGB();
+  tex2.bind2D_RGB();
 
   /*
    * Note: we do not need the M_vp (i.e. viewport transformation)
@@ -207,9 +224,12 @@ int main(int argc, char *argv[]) {
    * change in between frames, so we can create it once, and
    * reuse it.
   */
-  init_per_mat(-1,1,-1,1,0.1f, 100.0f,M_per);
-  init_camera_mat(g, t, e, M_cam);
-  std::cout << "Program ID: " << prog_id << std::endl;
+  GLuint prog_id = ld_shaders(
+    "../glsl/model-view-proj.vs", 
+    "../glsl/per-frag-blinn-phong.fs");
+
+  init_per_mat(WIDTH_PIXELS, HEIGHT_PIXELS,
+    0.1f, 100.0f, 30.0f, M_per);
   glfwSetScrollCallback(
     window,
     [](GLFWwindow *window, double xoffset, double yoffset) {
@@ -241,15 +261,16 @@ int main(int argc, char *argv[]) {
     // Bind the shaders
     glUseProgram(prog_id);
     
-    GLuint vs_id = shader_ids[0];
     GLint M_proj_id, M_per_id, M_cam_id;
+    GLint M_light_id;
     GLint ks_id, kd_id, ka_id;
     GLint light_id, intensity_id, Ia_id;
     GLint num_lights_id;
     GLint p_id;
-    GLint tex_id;
+    GLint tex_id, shadow_tex_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
+    M_light_id = glGetUniformLocation(prog_id, "M_light");
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
     ka_id = glGetUniformLocation(prog_id, "ka");
@@ -259,11 +280,13 @@ int main(int argc, char *argv[]) {
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
     tex_id = glGetUniformLocation(tex_id, "tex");
+    shadow_tex_id = glGetUniformLocation(shadow_tex_id, "shadow_tex");
 
     // Send uniform variables to device
     init_camera_mat(g, t, e, M_cam);
     glUniformMatrix4fv(M_per_id, 1, GL_FALSE, glm::value_ptr(M_per));
     glUniformMatrix4fv(M_cam_id, 1, GL_FALSE, glm::value_ptr(M_cam));
+    glUniformMatrix4fv(M_light_id, 1, GL_FALSE, glm::value_ptr(M_light));
     glUniform3fv(ks_id, 1, glm::value_ptr(ks));
     glUniform3fv(kd_id, 1, glm::value_ptr(kd));
     glUniform3fv(ka_id, 1, glm::value_ptr(ka));
@@ -272,12 +295,15 @@ int main(int argc, char *argv[]) {
     glUniform3fv(intensity_id, 3, (const GLfloat *)intensity);
     glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
     glUniform1f(p_id, p);
-    glUniform1i(tex_id, 0);
+    glUniform1i(shadow_tex_id, 0);
+    glUniform1i(tex_id, 1);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, TEX);
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, t_data.size());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, TEX_shadow);
+    glBindVertexArray(data.vao());
+    glDrawArrays(GL_TRIANGLES, 0, data.size());
 
     // Unbind the shaders
     glBindTexture(GL_TEXTURE_2D, 0);
