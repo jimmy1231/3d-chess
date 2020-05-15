@@ -36,6 +36,7 @@ glm::vec3 parse_vec3(std::string str) {
 
 class Light {
   public:
+    static const size_t Size = 6;
     glm::vec3 position;
     glm::vec3 intensity;
 

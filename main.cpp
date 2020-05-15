@@ -36,7 +36,14 @@
 #include "transformation_matrices.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
-#define FPS 1 
+// #define DEBUG_MODE
+
+#ifdef DEBUG_MODE
+  #define FPS 60
+#else
+  #define FPS 1 
+#endif
+
 #define MAX_MS_PER_FRAME 1000 / FPS /* milliseconds per frame */
 #define WIDTH_PIXELS 1400 
 #define HEIGHT_PIXELS 900 
@@ -270,7 +277,7 @@ int main(int argc, char *argv[]) {
     glUniform3fv(kd_id, 1, scene.Kd());
     glUniform3fv(ka_id, 1, scene.Ka());
     glUniform3fv(Ia_id, 1, scene.Ia());
-    glUniform3fv(light_id, scene.lights_.size(), scene.lights());
+    glUniform3fv(light_id, scene.lights_.size() * Light::Size, scene.lights());
     glUniform1i(num_lights_id, scene.lights_.size());
     glUniform1f(p_id, scene.p);
     glUniform1i(tex_id, 0);
@@ -283,6 +290,8 @@ int main(int argc, char *argv[]) {
     for (Model &model : scene.models) {
       std::cout << "Model: " << model.data->filename << std::endl;
       model.data->bind_VAO();
+      glBindVertexArray(model.data->vao);
+
       M_model_id = glGetUniformLocation(prog_id, "M_model");
       glUniformMatrix4fv(M_model_id, 1, false, model.model());
       glDrawArrays(GL_TRIANGLES, 0, model.data->size());

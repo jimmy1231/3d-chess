@@ -83,7 +83,7 @@ void main(void) {
     intensity = lights[i].intensity;
 
     L = shadowTexel * intensity * max(0, dot(n, l)); 
-    S = ks * intensity[i] * pow(max(0, dot(n, h)), p); 
+    S = ks * intensity * pow(max(0, dot(n, h)), p); 
 
     c += (L+S);
   }
