@@ -19,7 +19,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${OPENGL_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${ROOT}/glfw/include)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${ROOT}/glad/include)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${ROOT}/glm)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${ROOT}/json)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC $ENV{HOME}/dev/libs/CImg_latest)
 
 target_link_libraries(render glfw glad OpenGL::GL)
-

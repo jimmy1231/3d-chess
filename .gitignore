@@ -10,3 +10,4 @@ glm/
 *.swo
 *.obj
 *.mtl
+json.hpp

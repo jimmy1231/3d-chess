@@ -30,6 +30,7 @@
 // Custom header files
 #include "ShaderProg.h"
 #include "Data.h"
+#include "Scene.h"
 #include "Texture.h"
 #include "bind_shaders.h"
 #include "transformation_matrices.h"
@@ -41,10 +42,10 @@
 #define HEIGHT_PIXELS 900 
 #define DEG_TO_RAD 0.0174533
 
-#define time_p          std::chrono::high_resolution_clock::time_point
-#define duration        std::chrono::duration
-#define clock           std::chrono::high_resolution_clock
-#define duration_cast   std::chrono::duration_cast
+#define time_p std::chrono::high_resolution_clock::time_point
+#define duration std::chrono::duration
+#define clock std::chrono::high_resolution_clock
+#define duration_cast std::chrono::duration_cast
 
 /*
  * g : gaze direction (normalized)
@@ -162,6 +163,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  Scene scene("../data/data.json");
   auto ld_shaders = [](const char *nvs, const char *nfs)
     -> GLuint {
     // Load shadow map shaders
