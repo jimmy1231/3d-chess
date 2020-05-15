@@ -10,7 +10,7 @@ class Data {
     GLuint vbo;
     GLuint vao;
 
-    Data(char *f) : filename(f) {
+    Data(const char *f) : filename(f) {
       /*
        we can define this locally in this function because GL
        will copy all of this to GPU anyways, we do not need
@@ -63,6 +63,7 @@ class Data {
       glBindVertexArray(0);
     }
     void print() { print_vbo(data); }
+    size_t size() { return data.size(); }
 };
 
 #endif /* __RENDER_DATA_H__ */

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 
 #include "helpers.h"
@@ -39,40 +40,103 @@ class Light {
     glm::vec3 intensity;
 
     Light(std::string p, std::string i) 
-      : position(parse_vec3(p)), intensity(parse_vec3(i)) {}
+      : position(parse_vec3(p))
+      , intensity(parse_vec3(i)) {}
 };
 
 class Orientation {
   public:
+    glm::mat4 view_;
+    glm::mat4 per_;
+
     glm::vec3 eye;
     glm::vec3 gaze;
     glm::vec3 top;
+
+    float fovy;
+    float zNear;
+    float zFar;
+
+    Orientation() {}
+    Orientation(std::string e, std::string g, std::string t,
+                float f, float n, float a) 
+      : eye(parse_vec3(e))
+      , gaze(parse_vec3(g))
+      , top(parse_vec3(t))
+      , fovy(f)
+      , zNear(n)
+      , zFar(a)
+    {
+      gaze = glm::normalize(gaze);
+    }
+
+    const GLfloat *view() {
+      // Compute the camera basis
+      glm::vec3 w, u, v;
+      w = -glm::normalize(gaze);
+      u = glm::normalize(glm::cross(top, w));
+      v = glm::cross(w, u);
+
+      // M_cam = [ u v w e ]^-1, where u, v, w are
+      // vec4 with the 4th index set to 0.
+      view_ = glm::inverse(glm::mat4(
+        glm::vec4(u,0),
+        glm::vec4(v,0),
+        glm::vec4(w,0),
+        glm::vec4(eye,1)
+      ));
+
+      return (const GLfloat *)&view_;
+    }
+
+    const GLfloat *perspective(const float &width, const float &height) {
+      per_ = glm::perspective(
+        glm::radians(fovy), width/height,
+        zNear, zFar  
+      );
+      return (const GLfloat *)&per_;
+    }
 };
 
 class Model {
   public:
-    std::string objectId;
+    glm::mat4 model_; 
+
+    Data *data;
     float rotationDeg;
     glm::vec3 rotationAxis;
     glm::vec3 scale;
     glm::vec3 translate;
+
+    Model(Data *d, float r, std::string a, std::string s, std::string t)
+      : data(d)
+      , rotationDeg(r)
+      , rotationAxis(parse_vec3(a))
+      , scale(parse_vec3(s))
+      , translate(parse_vec3(t)) {}
+
+    const GLfloat *model() {
+      model_ = glm::mat4(1.0f);
+      return (const GLfloat *)&model_;       
+    }
 };
 
 class Scene {
   public:
     std::string filename;
 
-    std::vector<Light> lights;
+    std::vector<Light> lights_;
     Orientation orient;
-    glm::vec3 Ia;
-    glm::vec3 Kd;
-    glm::vec3 Ks;
-    glm::vec3 Ka;
+    glm::vec3 Ia_;
+    glm::vec3 Kd_;
+    glm::vec3 Ks_;
+    glm::vec3 Ka_;
     int p;
 
-    std::unordered_map<std::string, Data> objects;
+    std::unordered_map<std::string, Data *> objects;
     std::vector<Model> models;
 
+    Scene() {}
     Scene(std::string n) : filename(n) {
       std::ifstream ifs(filename);
       if (!ifs.is_open()) {
@@ -98,20 +162,26 @@ class Scene {
             lightJson["intensity"].get<std::string>(),
             lightJson["position"].get<std::string>()
           );
-          this->lights.push_back(light); 
+          this->lights_.push_back(light); 
         }
       }
 
       // Miscellaneous
       {
-        top = parse_vec3(j["top"].get<std::string>()); 
-        eye = parse_vec3(j["eye"].get<std::string>()); 
-        gaze = parse_vec3(j["gaze"].get<std::string>()); 
-        Ia = parse_vec3(j["Ia"].get<std::string>()); 
-        Kd = parse_vec3(j["Kd"].get<std::string>()); 
-        Ka = parse_vec3(j["Ka"].get<std::string>()); 
-        Ks = parse_vec3(j["Ks"].get<std::string>()); 
-        p = j["p"].get<int>();
+        this->orient = {
+          j["eye"].get<std::string>(), 
+          j["gaze"].get<std::string>(), 
+          j["top"].get<std::string>(),
+          j["fovy"].get<float>(),
+          j["zNear"].get<float>(),
+          j["zFar"].get<float>()
+        };
+
+        this->Ia_ = parse_vec3(j["Ia"].get<std::string>()); 
+        this->Kd_ = parse_vec3(j["Kd"].get<std::string>()); 
+        this->Ka_ = parse_vec3(j["Ka"].get<std::string>()); 
+        this->Ks_ = parse_vec3(j["Ks"].get<std::string>()); 
+        this->p = j["p"].get<int>();
       }
 
       // Objects
@@ -120,6 +190,7 @@ class Scene {
         assert(objects.is_array());
 
         std::string id, filename;
+        Data *data; 
         json objectJson;
         int i;
         for (i=0; i<objects.size(); i++) {
@@ -127,10 +198,43 @@ class Scene {
           id = objectJson["id"].get<std::string>();
           filename = objectJson["filename"].get<std::string>();
 
-          this->objects[id] = new Data(filename); 
+          data = new Data(filename.c_str());
+          this->objects[id] = data; 
+        }
+      }
+
+      // Models
+      {
+        auto models = j["models"];
+        assert(models.is_array());
+
+        json modelJson;
+        int i;
+        for (i=0; i<models.size(); i++) {
+          std::string object_id;
+
+          modelJson = models[i];
+          object_id = modelJson["object_id"].get<std::string>();
+          assert(this->objects.count(object_id) > 0);
+          Model model(
+            this->objects[object_id],
+            modelJson["rotation_deg"].get<float>(),
+            modelJson["rotation_axis"].get<std::string>(),
+            modelJson["scale"].get<std::string>(),
+            modelJson["translate"].get<std::string>()
+          );
+          this->models.push_back(model);
         }
       }
     }
+    const GLfloat *lights() {
+      Light *data = this->lights_.data();
+      return (const GLfloat *)data; 
+    }
+    const GLfloat *Kd() {return (const GLfloat *)&Kd_; }
+    const GLfloat *Ka() {return (const GLfloat *)&Ka_; }
+    const GLfloat *Ks() {return (const GLfloat *)&Ks_; }
+    const GLfloat *Ia() {return (const GLfloat *)&Ia_; }
 };
 
 #endif /* __RENDER_SCENE_H__ */

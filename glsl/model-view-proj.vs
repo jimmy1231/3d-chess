@@ -1,6 +1,17 @@
 #version 330 core
 #define MAX_NUM_LIGHTS 4 
 
+struct Light {
+  vec3 position;
+  vec3 intensity;  
+};
+
+struct OutLight {
+  vec3 h;
+  vec3 l;
+  vec3 I; 
+};
+
 out vec3 vColor;
 /* All in world coordinates */
 out vec2 vShadowTex;
@@ -8,19 +19,19 @@ out float dist;
 out vec3 vNormal;
 out vec2 vTex;
 out vec3 vEye;
-out vec3 vHalf[MAX_NUM_LIGHTS];
-out vec3 vLights[MAX_NUM_LIGHTS];
+out OutLight outLights[MAX_NUM_LIGHTS];
 
 layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
 layout(location = 2) in vec2 in_Tex;
 
+uniform mat4 M_model;
 uniform mat4 M_per;
 uniform mat4 M_cam;
 uniform mat4 M_light;
 uniform vec3 eye;
 uniform int num_lights;
-uniform vec3 lights[MAX_NUM_LIGHTS];
+uniform Light lights[MAX_NUM_LIGHTS];
 
 void main(void) {
   /*
@@ -31,7 +42,7 @@ void main(void) {
   vColor = vec3(0.5,0.5,0.5);
   vNormal = in_Normal;
   vTex = in_Tex;
-  dist = length(in_Position - vLights[0]);
+  dist = length(in_Position - lights[0].position);
   vShadowTex = (M_per * M_light * vec4(in_Position, 1.0)).xy; /* u,v */
   
   /*
@@ -56,16 +67,16 @@ void main(void) {
   int i;
   int bound = min(num_lights, MAX_NUM_LIGHTS);
   for (i=0; i<bound; i++) {
-    vec3 l = normalize(lights[i]-pos);
+    vec3 l = normalize(lights[i].position-pos);
     vec3 h = normalize(v+l);
-    vLights[i] = l;
-    vHalf[i] = h;
+    outLights[i].l = l;
+    outLights[i].h = h;
   }
    
   vEye = v;
 
   // Calculate screen coordinates for input vertex
-  vec4 _pos = M_per*M_cam*vec4(pos, 1.0);
+  vec4 _pos = M_per * M_cam * M_model * vec4(pos, 1.0);
   float w = _pos[3];
   gl_Position = _pos;
 }

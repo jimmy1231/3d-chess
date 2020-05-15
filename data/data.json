@@ -16,6 +16,9 @@
   "top": "0.0 1.0 0.0",
   "eye": "10.0 10.0 14.0",
   "gaze": "-10.0 -10.0 -14.0",
+  "fovy": 30.0,
+  "zNear": 0.1,
+  "zFar": 100.0,
   "Ia": "0.3 0.3 0.3",
   "Kd": "0.6 0.6 0.6",
   "Ks": "0.6 0.6 0.6",
@@ -24,13 +27,13 @@
   "objects": [
     {
       "id": "cube",
-      "filename": "data/cube.obj"
+      "filename": "../data/cube.obj"
     }
   ],
   "models": [
     {
       "object_id": "cube",
-      "rotation_deg": "0.0",
+      "rotation_deg": 0.0,
       "rotation_axis": "0.0 1.0 0.0",
       "scale": "1.0 1.0 1.0",
       "translate": "0.0 0.0 0.0"

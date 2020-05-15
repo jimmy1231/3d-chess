@@ -36,7 +36,7 @@
 #include "transformation_matrices.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
-#define FPS 60 
+#define FPS 1 
 #define MAX_MS_PER_FRAME 1000 / FPS /* milliseconds per frame */
 #define WIDTH_PIXELS 1400 
 #define HEIGHT_PIXELS 900 
@@ -47,36 +47,19 @@
 #define clock std::chrono::high_resolution_clock
 #define duration_cast std::chrono::duration_cast
 
-/*
- * g : gaze direction (normalized)
- * e : eye position
- * t : "up" vector (in world coordinates)
- */
-glm::vec3 e(10, 10, 14);
-glm::vec3 g;
-glm::vec3 t(0,1,0);
-
-GLfloat p = 100;
-GLint num_lights = 3;
-glm::vec3 lights[3] = {{100,40,50},{-100,40,50},{100,40,-50}};
-glm::vec3 intensity[3] = {{0.9f,0.9f,0.9f},{0.2f,0.2f,0.2f},{0.2f,0.2f,0.2f}};
-glm::vec3 Ia(0.3f,0.3f,0.3f);
-glm::vec3 kd(0.6f,0.6f,0.6f);
-glm::vec3 ks(0.6f, 0.6f, 0.6f);
-glm::vec3 ka(0.3f,0.3f,0.3f);
-
-glm::mat4 M_per, M_cam;
+Scene scene;
 glm::vec2 *last_cursor_pos = NULL;
 bool LEFT_MOUSE_BTN_PRESSED = false;
 
 void window_callback_scroll(const double &xoffset, const double &yoffset) {
   // Get direction of gaze, and adjust towards/away that direction
-  glm::vec3 _d = 0.5f * glm::normalize(g);
+  Orientation *orient = &scene.orient;
+  glm::vec3 _d = 0.5f * glm::normalize(orient->gaze);
   
   if (yoffset > 0) {
-    e = e+_d; 
+    orient->eye = orient->eye+_d; 
   } else {
-    e = e-_d;
+    orient->eye = orient->eye-_d;
   }
 }
 
@@ -117,6 +100,8 @@ void window_callback_cursor_pos(float xpos, float ypos) {
    */
   
   // Rotate about y-axis by rad
+  Orientation *orient = &scene.orient;
+
   float rad;
   glm::vec3 axis;
   glm::mat3 R;
@@ -127,14 +112,14 @@ void window_callback_cursor_pos(float xpos, float ypos) {
     rad = fmin((float)(DEG_TO_RAD * -delta.y)/20.0f, 0.5f);
 
     // Rotate about 
-    glm::vec3 u(glm::cross(g,t));
+    glm::vec3 u(glm::cross(orient->gaze, orient->top));
     axis = normalize(u);
   }
   
   R = gcc_test::rot_about(rad, axis);
-  e = R*e;
-  g = glm::normalize(
-    glm::vec3(0.0f,0.0f,0.0f)-e);
+  orient->eye = R*orient->eye;
+  orient->gaze = glm::normalize(
+    glm::vec3(0.0f,0.0f,0.0f)-orient->eye);
 
   // Finally, reset prev (i.e. last_cursor_pos)
   *prev = curr;
@@ -145,7 +130,6 @@ int main(int argc, char *argv[]) {
     std::cout << "Please specify input file" << std::endl;
     exit(0);
   }
-  g = glm::normalize(glm::vec3(0.0f,0.0f,0.0f)-e);
 
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -163,7 +147,10 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  Scene scene("../data/data.json");
+  //////////////////////////////////////////////////////////////////////
+  scene = {"../data/data.json"};
+  //////////////////////////////////////////////////////////////////////
+
   auto ld_shaders = [](const char *nvs, const char *nfs)
     -> GLuint {
     // Load shadow map shaders
@@ -178,8 +165,6 @@ int main(int argc, char *argv[]) {
     return prog_id;
   };
 
-  Data data(argv[1]);
-  data.bind_VAO();
   Texture shadow(NULL, WIDTH_PIXELS, HEIGHT_PIXELS);
   {
     /*
@@ -199,9 +184,11 @@ int main(int argc, char *argv[]) {
       "../glsl/shadow-map.fs");
     shadow.framebuffer();
 
-    glm::vec3 light = lights[0];
+    glm::vec3 light = scene.lights_[0].position;
     glm::vec3 gaze = glm::vec3(0,0,0) - light;
-    shadow.shadow_map(shadow_prog_id, data, gaze, t, light);
+    Data data = *scene.objects["cube"];
+    shadow.shadow_map(shadow_prog_id, data, scene.orient.gaze,
+      scene.orient.top, light);
   }
 
   Texture tex1("../tex/cube-tex.png");
@@ -244,8 +231,6 @@ int main(int argc, char *argv[]) {
     }
   );
   
-  init_per_mat(WIDTH_PIXELS, HEIGHT_PIXELS,
-    0.1f, 100.0f, 30.0f, M_per);
   glEnable(GL_DEPTH_TEST);
   time_p tic, toc;
   duration<int, std::milli> fps(MAX_MS_PER_FRAME);
@@ -272,33 +257,36 @@ int main(int argc, char *argv[]) {
     ka_id = glGetUniformLocation(prog_id, "ka");
     light_id = glGetUniformLocation(prog_id, "lights");
     num_lights_id = glGetUniformLocation(prog_id, "num_lights");
-    intensity_id = glGetUniformLocation(prog_id, "intensity");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
     tex_id = glGetUniformLocation(prog_id, "tex");
     shadow_tex_id = glGetUniformLocation(prog_id, "shadow_tex");
 
     // Send uniform variables to device
-    init_camera_mat(g, t, e, M_cam);
-    glUniformMatrix4fv(M_per_id, 1, GL_FALSE, glm::value_ptr(M_per));
-    glUniformMatrix4fv(M_cam_id, 1, GL_FALSE, glm::value_ptr(M_cam));
-    glUniformMatrix4fv(M_light_id, 1, GL_FALSE, glm::value_ptr(shadow.view));
-    glUniform3fv(ks_id, 1, glm::value_ptr(ks));
-    glUniform3fv(kd_id, 1, glm::value_ptr(kd));
-    glUniform3fv(ka_id, 1, glm::value_ptr(ka));
-    glUniform3fv(light_id, num_lights, (const GLfloat *)lights);
-    glUniform1i(num_lights_id, num_lights_id);
-    glUniform3fv(intensity_id, 3, (const GLfloat *)intensity);
-    glUniform3fv(Ia_id, 1, glm::value_ptr(Ia));
-    glUniform1f(p_id, p);
+    glUniformMatrix4fv(M_per_id, 1, false, scene.orient.perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
+    glUniformMatrix4fv(M_cam_id, 1, false, scene.orient.view());
+    glUniformMatrix4fv(M_light_id, 1, false, (GLfloat *)&shadow.view);
+    glUniform3fv(ks_id, 1, scene.Ks());
+    glUniform3fv(kd_id, 1, scene.Kd());
+    glUniform3fv(ka_id, 1, scene.Ka());
+    glUniform3fv(Ia_id, 1, scene.Ia());
+    glUniform3fv(light_id, scene.lights_.size(), scene.lights());
+    glUniform1i(num_lights_id, scene.lights_.size());
+    glUniform1f(p_id, scene.p);
     glUniform1i(tex_id, 0);
     glUniform1i(shadow_tex_id, 1);
 
     tex1.bind_to_unit(0);
     tex2.bind_to_unit(1);
-    glBindVertexArray(data.vao);
 
-    glDrawArrays(GL_TRIANGLES, 0, data.data.size());
+    GLint M_model_id;
+    for (Model &model : scene.models) {
+      std::cout << "Model: " << model.data->filename << std::endl;
+      model.data->bind_VAO();
+      M_model_id = glGetUniformLocation(prog_id, "M_model");
+      glUniformMatrix4fv(M_model_id, 1, false, model.model());
+      glDrawArrays(GL_TRIANGLES, 0, model.data->size());
+    } 
 
     // Unbind the shaders
     glBindTexture(GL_TEXTURE_2D, 0);

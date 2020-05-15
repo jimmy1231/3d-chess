@@ -1,6 +1,17 @@
 #version 330 core
 #define MAX_NUM_LIGHTS 4 
 
+struct Light {
+  vec3 position;
+  vec3 intensity;  
+};
+
+struct OutLight {
+  vec3 h;
+  vec3 l;
+  vec3 I; 
+};
+
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
 in float dist;
 in vec2 vShadowTex;
@@ -8,8 +19,7 @@ in vec3 vColor;
 in vec3 vNormal;
 in vec2 vTex; 
 in vec3 vEye;
-in vec3 vHalf[MAX_NUM_LIGHTS];
-in vec3 vLights[MAX_NUM_LIGHTS];
+in OutLight outLights[MAX_NUM_LIGHTS];
 
 uniform vec3 Ia;
 uniform vec3 ka;
@@ -17,7 +27,7 @@ uniform vec3 kd;
 uniform vec3 ks;
 uniform float p;
 uniform int num_lights;
-uniform vec3 intensity[MAX_NUM_LIGHTS];
+uniform Light lights[MAX_NUM_LIGHTS];
 uniform sampler2D tex;
 uniform sampler2D shadow_tex;
 
@@ -61,16 +71,18 @@ void main(void) {
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
+  vec3 intensity;
   int i;
   int bound = min(num_lights, MAX_NUM_LIGHTS);
 
   for (i=0; i<bound; i++) {
     n = normalize(vNormal);
     v = normalize(vEye);
-    h = normalize(vHalf[i]);
-    l = normalize(vLights[i]);
+    h = normalize(outLights[i].h);
+    l = normalize(outLights[i].l);
+    intensity = lights[i].intensity;
 
-    L = shadowTexel * intensity[i] * max(0, dot(n, l)); 
+    L = shadowTexel * intensity * max(0, dot(n, l)); 
     S = ks * intensity[i] * pow(max(0, dot(n, h)), p); 
 
     c += (L+S);
