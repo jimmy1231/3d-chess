@@ -6,10 +6,9 @@ struct Light {
   vec3 intensity;  
 };
 
-struct OutLight {
-  vec3 h;
+struct VSLight {
   vec3 l;
-  vec3 I; 
+  vec3 h;
 };
 
 out vec3 vColor;
@@ -19,7 +18,7 @@ out float dist;
 out vec3 vNormal;
 out vec2 vTex;
 out vec3 vEye;
-out OutLight outLights[MAX_NUM_LIGHTS];
+out VSLight vLights[MAX_NUM_LIGHTS];
 
 layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
@@ -69,8 +68,8 @@ void main(void) {
   for (i=0; i<bound; i++) {
     vec3 l = normalize(lights[i].position-pos);
     vec3 h = normalize(v+l);
-    outLights[i].l = l;
-    outLights[i].h = h;
+    vLights[i].l = l;
+    vLights[i].h = h;
   }
    
   vEye = v;

@@ -6,10 +6,9 @@ struct Light {
   vec3 intensity;  
 };
 
-struct OutLight {
-  vec3 h;
+struct VSLight {
   vec3 l;
-  vec3 I; 
+  vec3 h;
 };
 
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
@@ -19,7 +18,7 @@ in vec3 vColor;
 in vec3 vNormal;
 in vec2 vTex; 
 in vec3 vEye;
-in OutLight outLights[MAX_NUM_LIGHTS];
+in VSLight vLights[MAX_NUM_LIGHTS];
 
 uniform vec3 Ia;
 uniform vec3 ka;
@@ -78,8 +77,8 @@ void main(void) {
   for (i=0; i<bound; i++) {
     n = normalize(vNormal);
     v = normalize(vEye);
-    h = normalize(outLights[i].h);
-    l = normalize(outLights[i].l);
+    h = normalize(vLights[i].h);
+    l = normalize(vLights[i].l);
     intensity = lights[i].intensity;
 
     L = shadowTexel * intensity * max(0, dot(n, l)); 

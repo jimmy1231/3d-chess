@@ -38,7 +38,7 @@
 #define _DEBUG_LOOP_LOGS_ 0
 // #define DEBUG_MODE
 
-#ifdef DEBUG_MODE
+#ifndef DEBUG_MODE
   #define FPS 60
 #else
   #define FPS 1 
@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
     GLint M_proj_id, M_per_id, M_cam_id;
     GLint M_light_id;
     GLint ks_id, kd_id, ka_id;
-    GLint light_id, intensity_id, Ia_id;
+    GLint Ia_id;
     GLint num_lights_id;
     GLint p_id;
     GLint tex_id, shadow_tex_id;
@@ -262,7 +262,6 @@ int main(int argc, char *argv[]) {
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
     ka_id = glGetUniformLocation(prog_id, "ka");
-    light_id = glGetUniformLocation(prog_id, "lights");
     num_lights_id = glGetUniformLocation(prog_id, "num_lights");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
@@ -277,8 +276,9 @@ int main(int argc, char *argv[]) {
     glUniform3fv(kd_id, 1, scene.Kd());
     glUniform3fv(ka_id, 1, scene.Ka());
     glUniform3fv(Ia_id, 1, scene.Ia());
-    glUniform3fv(light_id, scene.lights_.size() * Light::Size, scene.lights());
     glUniform1i(num_lights_id, scene.lights_.size());
+    scene.SetLightsUniform(prog_id,
+      "lights[%d].position", "lights[%d].intensity");
     glUniform1f(p_id, scene.p);
     glUniform1i(tex_id, 0);
     glUniform1i(shadow_tex_id, 1);
@@ -288,7 +288,6 @@ int main(int argc, char *argv[]) {
 
     GLint M_model_id;
     for (Model &model : scene.models) {
-      std::cout << "Model: " << model.data->filename << std::endl;
       model.data->bind_VAO();
       glBindVertexArray(model.data->vao);
 

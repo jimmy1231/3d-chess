@@ -160,8 +160,8 @@ class Scene {
         for (i=0; i<lights.size(); i++) {
           lightJson = lights[i];
           Light light(
-            lightJson["intensity"].get<std::string>(),
-            lightJson["position"].get<std::string>()
+            lightJson["position"].get<std::string>(),
+            lightJson["intensity"].get<std::string>()
           );
           this->lights_.push_back(light); 
         }
@@ -236,6 +236,24 @@ class Scene {
     const GLfloat *Ka() {return (const GLfloat *)&Ka_; }
     const GLfloat *Ks() {return (const GLfloat *)&Ks_; }
     const GLfloat *Ia() {return (const GLfloat *)&Ia_; }
+    void SetLightsUniform(const GLuint prog,
+                          const char *posFormatStr,
+                          const char *intensityFormatStr) {
+      char id_name[100];
+      Light *light;
+      int i;
+      for (i=0; i<lights_.size(); i++) {
+        int id;
+        light = &lights_[i];
+        snprintf(id_name, 100, posFormatStr, i);
+        id = glGetUniformLocation(prog, id_name);   
+        glUniform3fv(id, 1, (const GLfloat *)&light->position);
+
+        snprintf(id_name, 100, intensityFormatStr, i);
+        id = glGetUniformLocation(prog, id_name);   
+        glUniform3fv(id, 1, (const GLfloat *)&light->intensity);
+      } 
+    }
 };
 
 #endif /* __RENDER_SCENE_H__ */
