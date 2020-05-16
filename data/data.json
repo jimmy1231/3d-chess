@@ -30,13 +30,17 @@
   "p": 100,
   "objects": [
     {
+      "id": "bunny",
+      "filename": "../data/bunny.obj"
+    },
+    {
       "id": "cube",
       "filename": "../data/cube.obj"
     }
   ],
   "models": [
     {
-      "object_id": "cube",
+      "object_id": "bunny",
       "rotation_deg": 0.0,
       "rotation_axis": "0.0 1.0 0.0",
       "scale": "1.0 1.0 1.0",
