@@ -74,17 +74,20 @@ void main(void) {
   int i;
   int bound = min(num_lights, MAX_NUM_LIGHTS);
 
-  for (i=0; i<bound; i++) {
-    n = normalize(vNormal);
-    v = normalize(vEye);
-    h = normalize(vLights[i].h);
-    l = normalize(vLights[i].l);
-    intensity = lights[i].intensity;
+  float e = 2.0;
+  if (true || dist <= shadowTexel.x + e) {
+    for (i=0; i<bound; i++) {
+      n = normalize(vNormal);
+      v = normalize(vEye);
+      h = normalize(vLights[i].h);
+      l = normalize(vLights[i].l);
+      intensity = lights[i].intensity;
 
-    L = shadowTexel * intensity * max(0, dot(n, l)); 
-    S = ks * intensity * pow(max(0, dot(n, h)), p); 
+      L = kdTexel * intensity * max(0, dot(n, l)); 
+      S = ks * intensity * pow(max(0, dot(n, h)), p); 
 
-    c += (L+S);
+      c += (L+S);
+    }
   }
 
   A = ka * Ia;

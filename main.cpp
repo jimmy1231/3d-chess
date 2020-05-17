@@ -113,10 +113,10 @@ void window_callback_cursor_pos(float xpos, float ypos) {
   glm::vec3 axis;
   glm::mat3 R;
   if (fabs(delta.x) > fabs(delta.y)) { 
-    rad = fmin((float)(DEG_TO_RAD * -delta.x)/20.0f, 0.5f);
+    rad = fmin((float)(DEG_TO_RAD * -delta.x)/10.0f, 0.5f);
     axis = glm::vec3(0,1,0);
   } else {
-    rad = fmin((float)(DEG_TO_RAD * -delta.y)/20.0f, 0.5f);
+    rad = fmin((float)(DEG_TO_RAD * -delta.y)/10.0f, 0.5f);
 
     // Rotate about 
     glm::vec3 u(glm::cross(orient->gaze, orient->top));
@@ -214,9 +214,12 @@ int main(int argc, char *argv[]) {
    * change in between frames, so we can create it once, and
    * reuse it.
   */
+  // GLuint prog_id = ld_shaders(
+  //     "../glsl/model-view-proj.vs",
+  //     "../glsl/per-frag-blinn-phong.fs");
   GLuint prog_id = ld_shaders(
-    "../glsl/model-view-proj.vs",
-    "../glsl/per-frag-blinn-phong.fs");
+      "../glsl/shadow-map.vs",
+      "../glsl/shadow-map.fs");
 
   glfwSetScrollCallback(
     window,
@@ -249,6 +252,12 @@ int main(int argc, char *argv[]) {
     // Bind the shaders
     glUseProgram(prog_id);
     
+    glm::vec3 light = glm::vec3(0.0, 1.0, 10.0);
+    glm::vec3 gaze = glm::vec3(0,0,0) - light;
+    glm::vec3 top = glm::vec3(0,1,0);
+    glm::mat4 scam;
+    init_camera_mat(gaze, top, light, scam);
+
     GLint M_proj_id, M_per_id, M_cam_id;
     GLint M_light_id;
     GLint ks_id, kd_id, ka_id;
@@ -269,7 +278,8 @@ int main(int argc, char *argv[]) {
     shadow_tex_id = glGetUniformLocation(prog_id, "shadow_tex");
 
     // Send uniform variables to device
-    glUniformMatrix4fv(M_per_id, 1, false, scene.orient.perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
+    glUniformMatrix4fv(M_per_id, 1, false, 
+      scene.orient.perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
     glUniformMatrix4fv(M_cam_id, 1, false, scene.orient.view());
     glUniformMatrix4fv(M_light_id, 1, false, (GLfloat *)&shadow.view);
     glUniform3fv(ks_id, 1, scene.Ks());
@@ -284,16 +294,18 @@ int main(int argc, char *argv[]) {
     glUniform1i(shadow_tex_id, 1);
 
     tex1.bind_to_unit(0);
-    tex2.bind_to_unit(1);
+    shadow.bind_to_unit(1);
 
+    Data *data;
     GLint M_model_id;
     for (Model &model : scene.models) {
-      model.data->bind_VAO();
-      glBindVertexArray(model.data->vao);
+      data = model.data_;
+      data->bind_VAO();
+      glBindVertexArray(data->vao);
 
       M_model_id = glGetUniformLocation(prog_id, "M_model");
       glUniformMatrix4fv(M_model_id, 1, false, model.model());
-      glDrawArrays(GL_TRIANGLES, 0, model.data->size());
+      glDrawArrays(GL_TRIANGLES, 0, data->size());
     } 
 
     // Unbind the shaders

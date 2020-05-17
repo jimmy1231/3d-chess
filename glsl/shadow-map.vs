@@ -1,14 +1,16 @@
 #version 330 core
 
-out float dist;
+out float d;
 
-uniform mat4 per;
-uniform mat4 view;
+uniform mat4 M_per;
+uniform mat4 M_cam;
+uniform mat4 M_model;
 uniform vec3 light;
 
 layout(location = 0) in vec3 in_Position;
 
 void main(void) {
-  dist = length(in_Position - light); 
-  gl_Position = per * view * vec4(in_Position, 1.0);	
+  vec4 pos = M_per * M_cam * M_model * vec4(in_Position, 1.0);
+  d = pos.z/pos[3];
+  gl_Position = pos;
 }

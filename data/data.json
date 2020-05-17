@@ -21,8 +21,8 @@
   "eye": "10.0 10.0 14.0",
   "gaze": "-10.0 -10.0 -14.0",
   "fovy": 30.0,
-  "zNear": 0.1,
-  "zFar": 100.0,
+  "zNear": 1.0,
+  "zFar": 1000.0,
   "Ia": "0.3 0.3 0.3",
   "Kd": "0.6 0.6 0.6",
   "Ks": "0.6 0.6 0.6",
@@ -36,15 +36,37 @@
     {
       "id": "cube",
       "filename": "../data/cube.obj"
+    },
+    {
+      "id": "plane",
+      "filename": "../data/plane.obj"
     }
   ],
   "models": [
     {
       "object_id": "bunny",
-      "rotation_deg": 0.0,
-      "rotation_axis": "0.0 1.0 0.0",
+      "rotation_deg": 30.0,
+      "rotation_axis": "1.0 1.0 0.0",
       "scale": "1.0 1.0 1.0",
       "translate": "0.0 0.0 0.0"
+    },
+    {
+      "object_id": "plane",
+      "rotation_deg": 0.0,
+      "rotation_axis": "0.0 1.0 0.0",
+      "scale": "0.1 0.1 0.1",
+      "translate": "0.0 0.0 0.0"
+    }
+  ],
+  "textures": [
+    {
+      "id": "cube1",
+      "type": "TEXTURE",
+      "filename": "../tex/cube-tex.png"
+    },
+    {
+      "id": "shadow",
+      "type": "SHADOW"
     }
   ]
 }

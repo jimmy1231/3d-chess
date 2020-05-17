@@ -6,8 +6,10 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <glm/geometric.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 
+#include "Texture.h"
 #include "helpers.h"
 
 using json = nlohmann::json;
@@ -103,27 +105,47 @@ class Model {
   public:
     glm::mat4 model_; 
 
-    Data *data;
-    float rotationDeg;
-    glm::vec3 rotationAxis;
-    glm::vec3 scale;
-    glm::vec3 translate;
+    Data *data_;
+    Texture *tex_;
+
+    float rotationDeg_;
+    glm::vec3 rotationAxis_;
+    glm::vec3 scale_;
+    glm::vec3 translate_;
 
     Model(Data *d, float r, std::string a, std::string s, std::string t)
-      : data(d)
-      , rotationDeg(r)
-      , rotationAxis(parse_vec3(a))
-      , scale(parse_vec3(s))
-      , translate(parse_vec3(t)) {}
+      : data_(d)
+      , rotationDeg_(r)
+      , rotationAxis_(parse_vec3(a))
+      , scale_(parse_vec3(s))
+      , translate_(parse_vec3(t)) {}
 
     const GLfloat *model() {
-      model_ = glm::mat4(1.0f);
+      glm::mat4 rot = gcc_test::rot_about(
+        glm::radians(rotationDeg_),
+        rotationAxis_);
+      glm::mat4 scale = glm::transpose(glm::mat4(
+        scale_[0], 0.0f, 0.0f, 0.0f,
+        0.0f, scale_[1], 0.0f, 0.0f,
+        0.0f, 0.0f, scale_[2], 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+      ));
+      glm::mat4 trans = glm::transpose(glm::mat4(
+        1.0f, 0.0f, 0.0f, translate_[0],
+        0.0f, 1.0f, 0.0f, translate_[1],
+        0.0f, 0.0f, 1.0f, translate_[2],
+        0.0f, 0.0f, 0.0f, 1.0f
+      ));
+      model_ = rot * scale * trans;
       return (const GLfloat *)&model_;       
     }
 };
 
 class Scene {
   public:
+    int WIDTH;
+    int HEIGHT;
+
     std::string filename;
 
     std::vector<Light> lights_;
@@ -135,6 +157,7 @@ class Scene {
     int p;
 
     std::unordered_map<std::string, Data *> objects;
+    std::unordered_map<std::string, Texture *> textures;
     std::vector<Model> models;
 
     Scene() {}
@@ -227,10 +250,6 @@ class Scene {
           this->models.push_back(model);
         }
       }
-    }
-    const GLfloat *lights() {
-      Light *data = this->lights_.data();
-      return (const GLfloat *)data; 
     }
     const GLfloat *Kd() {return (const GLfloat *)&Kd_; }
     const GLfloat *Ka() {return (const GLfloat *)&Ka_; }
