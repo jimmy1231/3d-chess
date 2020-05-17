@@ -61,7 +61,7 @@ bool LEFT_MOUSE_BTN_PRESSED = false;
 void window_callback_scroll(const double &xoffset, const double &yoffset) {
   // Get direction of gaze, and adjust towards/away that direction
   Orientation *orient = &scene.orient;
-  glm::vec3 _d = 0.5f * glm::normalize(orient->gaze);
+  glm::vec3 _d = 0.2f * glm::normalize(orient->gaze);
   
   if (yoffset > 0) {
     orient->eye = orient->eye+_d; 
@@ -251,12 +251,6 @@ int main(int argc, char *argv[]) {
 
     // Bind the shaders
     glUseProgram(prog_id);
-    
-    glm::vec3 light = glm::vec3(0.0, 1.0, 10.0);
-    glm::vec3 gaze = glm::vec3(0,0,0) - light;
-    glm::vec3 top = glm::vec3(0,1,0);
-    glm::mat4 scam;
-    init_camera_mat(gaze, top, light, scam);
 
     GLint M_proj_id, M_per_id, M_cam_id;
     GLint M_light_id;
