@@ -34,6 +34,7 @@
 #include "Texture.h"
 #include "bind_shaders.h"
 #include "transformation_matrices.h"
+#include "read_fbo_pixels.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
 // #define DEBUG_MODE
@@ -172,7 +173,9 @@ int main(int argc, char *argv[]) {
     return prog_id;
   };
 
-  Texture shadow(NULL, WIDTH_PIXELS, HEIGHT_PIXELS);
+  Texture shadow(NULL,
+                 GL_COLOR_ATTACHMENT0,
+                 WIDTH_PIXELS, HEIGHT_PIXELS);
   {
     /*
      * Load shadow by pre-rendering shadow map into a 
@@ -189,19 +192,20 @@ int main(int argc, char *argv[]) {
     GLuint shadow_prog_id = ld_shaders(
       "../glsl/shadow-map.vs",
       "../glsl/shadow-map.fs");
-    shadow.framebuffer();
 
     glm::vec3 light = scene.lights_[0].position;
     glm::vec3 gaze = glm::vec3(0,0,0) - light;
     Data data = *scene.objects["cube"];
-    shadow.shadow_map(shadow_prog_id, data, scene.orient.gaze,
-      scene.orient.top, light);
+    shadow.shadow_map(shadow_prog_id,
+                      scene,
+                      scene.orient.gaze, scene.orient.top, light);
+    screenshot(shadow.fbo_id,
+               GL_DEPTH_ATTACHMENT,
+               WIDTH_PIXELS, HEIGHT_PIXELS,
+               "../shadow-screen.tga");
   }
 
-  Texture tex1("../tex/cube-tex.png");
-  Texture tex2("../tex/cube-tex2.png");
-  tex1.bind2D_RGB();
-  tex2.bind2D_RGB();
+  Texture tex1("../tex/cube-tex2.png");
 
   /*
    * Note: we do not need the M_vp (i.e. viewport transformation)
@@ -218,8 +222,8 @@ int main(int argc, char *argv[]) {
   //     "../glsl/model-view-proj.vs",
   //     "../glsl/per-frag-blinn-phong.fs");
   GLuint prog_id = ld_shaders(
-      "../glsl/shadow-map.vs",
-      "../glsl/shadow-map.fs");
+      "../glsl/model-view-proj.vs",
+      "../glsl/per-frag-blinn-phong.fs");
 
   glfwSetScrollCallback(
     window,
@@ -259,9 +263,11 @@ int main(int argc, char *argv[]) {
     GLint num_lights_id;
     GLint p_id;
     GLint tex_id, shadow_tex_id;
+    GLint M_scale_bias_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
     M_light_id = glGetUniformLocation(prog_id, "M_light");
+    M_scale_bias_id = glGetUniformLocation(prog_id, "M_scale_bias");
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
     ka_id = glGetUniformLocation(prog_id, "ka");
@@ -276,6 +282,7 @@ int main(int argc, char *argv[]) {
       scene.orient.perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
     glUniformMatrix4fv(M_cam_id, 1, false, scene.orient.view());
     glUniformMatrix4fv(M_light_id, 1, false, (GLfloat *)&shadow.view);
+    glUniformMatrix4fv(M_scale_bias_id, 1, false, scene.orient.scale_bias());
     glUniform3fv(ks_id, 1, scene.Ks());
     glUniform3fv(kd_id, 1, scene.Kd());
     glUniform3fv(ka_id, 1, scene.Ka());

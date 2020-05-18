@@ -9,7 +9,6 @@
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 
-#include "Texture.h"
 #include "helpers.h"
 
 using json = nlohmann::json;
@@ -51,6 +50,7 @@ class Orientation {
   public:
     glm::mat4 view_;
     glm::mat4 per_;
+    glm::mat4 scale_bias_;
 
     glm::vec3 eye;
     glm::vec3 gaze;
@@ -92,6 +92,17 @@ class Orientation {
       return (const GLfloat *)&view_;
     }
 
+    const GLfloat *scale_bias() {
+      scale_bias_ = glm::transpose(glm::mat4(
+        0.5, 0.0, 0.0, 0.5,
+        0.0, 0.5, 0.0, 0.5,
+        0.0, 0.0, 0.5, 0.5,
+        0.0, 0.0, 0.0, 1.0
+      ));
+
+      return (const GLfloat *)&scale_bias_;
+    }
+
     const GLfloat *perspective(const float &width, const float &height) {
       per_ = glm::perspective(
         glm::radians(fovy), width/height,
@@ -106,7 +117,6 @@ class Model {
     glm::mat4 model_; 
 
     Data *data_;
-    Texture *tex_;
 
     float rotationDeg_;
     glm::vec3 rotationAxis_;
@@ -157,7 +167,6 @@ class Scene {
     int p;
 
     std::unordered_map<std::string, Data *> objects;
-    std::unordered_map<std::string, Texture *> textures;
     std::vector<Model> models;
 
     Scene() {}

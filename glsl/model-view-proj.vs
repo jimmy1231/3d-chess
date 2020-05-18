@@ -13,12 +13,12 @@ struct VSLight {
 
 out vec3 vColor;
 /* All in world coordinates */
-out vec2 vShadowTex;
 out float dist;
 out vec3 vNormal;
 out vec2 vTex;
 out vec3 vEye;
 out VSLight vLights[MAX_NUM_LIGHTS];
+out vec4 shadow_coords;
 
 layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
@@ -28,6 +28,7 @@ uniform mat4 M_model;
 uniform mat4 M_per;
 uniform mat4 M_cam;
 uniform mat4 M_light;
+uniform mat4 M_scale_bias;
 uniform vec3 eye;
 uniform int num_lights;
 uniform Light lights[MAX_NUM_LIGHTS];
@@ -41,8 +42,6 @@ void main(void) {
   vColor = vec3(0.5,0.5,0.5);
   vNormal = in_Normal;
   vTex = in_Tex;
-  dist = length(in_Position - lights[0].position);
-  vShadowTex = (M_per * M_light * vec4(in_Position, 1.0)).xy; /* u,v */
   
   /*
    * Specify v, l, h vectors per-vertex as output of the
@@ -76,6 +75,6 @@ void main(void) {
 
   // Calculate screen coordinates for input vertex
   vec4 _pos = M_per * M_cam * M_model * vec4(pos, 1.0);
-  float w = _pos[3];
+  shadow_coords = M_scale_bias * M_per * M_light * M_model * vec4(pos, 1.0);
   gl_Position = _pos;
 }

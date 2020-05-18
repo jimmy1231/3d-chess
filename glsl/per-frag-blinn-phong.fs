@@ -13,12 +13,12 @@ struct VSLight {
 
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
 in float dist;
-in vec2 vShadowTex;
 in vec3 vColor;
 in vec3 vNormal;
 in vec2 vTex; 
 in vec3 vEye;
 in VSLight vLights[MAX_NUM_LIGHTS];
+in vec4 shadow_coords;
 
 uniform vec3 Ia;
 uniform vec3 ka;
@@ -28,7 +28,7 @@ uniform float p;
 uniform int num_lights;
 uniform Light lights[MAX_NUM_LIGHTS];
 uniform sampler2D tex;
-uniform sampler2D shadow_tex;
+uniform sampler2DShadow shadow_tex;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
 
@@ -66,7 +66,18 @@ void main(void) {
   vec3 S;
   vec3 A;
 
-  vec3 shadowTexel = texture(shadow_tex, vTex).rgb;
+  /*
+   * textureProj will take as input a vec4 := (x,y,z,w),
+   * apply perspective division, then take the x-y 
+   * components as u,v coordinates to match against the
+   * texture. 
+   * In addition, it performs a depth (z) buffer check:
+   *    If the depth (z) value of the input vec4 coord
+   *    is GREATER THAN value of the texture, then
+   *    texture returns (0,0,0) as color - since it is
+   *    hidden in shadow
+   */
+  vec3 shadowTexel = (textureProj(shadow_tex, shadow_coords) * vec4(1.0)).rgb;
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
@@ -83,7 +94,7 @@ void main(void) {
       l = normalize(vLights[i].l);
       intensity = lights[i].intensity;
 
-      L = kdTexel * intensity * max(0, dot(n, l)); 
+      L = kdTexel * shadowTexel *intensity * max(0, dot(n, l)); 
       S = ks * intensity * pow(max(0, dot(n, h)), p); 
 
       c += (L+S);
