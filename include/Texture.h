@@ -7,6 +7,39 @@
 #include "transformation_matrices.h"
 #include "_v1/load_tex.h"
 
+static bool check_fbo_status(GLuint fbo, GLenum target) {
+  GLenum fboStatus = glCheckFramebufferStatus(target);
+  bool complete = false;
+  std::string str;
+  switch (fboStatus) {
+    case GL_FRAMEBUFFER_COMPLETE:
+      str = "COMPLETE";
+      complete = true;
+      break;
+    case GL_FRAMEBUFFER_UNDEFINED:
+      str = "UNDEFINED";
+      break;
+    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+      str = "INCOMPLETE_ATTACHMENT";
+      break;
+    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+      str = "tINCOMPLETE_MISSING_ATTACHMENT";
+      break;
+    case GL_FRAMEBUFFER_UNSUPPORTED:
+      str = "FRAMEBUFFER_UNSUPPORTED";
+      break;
+    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+      str = "FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+      break;
+    default:
+      break;
+  }
+
+  printf("Framebuffer %d: %s\n", fbo, 
+    str.c_str());
+  return complete;
+}
+
 class Texture {
   public:
     /* Which slot to attach the shadow texture to in FBO */
@@ -25,10 +58,18 @@ class Texture {
       data = load_tex(file, width, height);
       glBindTexture(GL_TEXTURE_2D, id);
 
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_WRAP_S, 
+                      GL_CLAMP);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_WRAP_T, 
+                      GL_CLAMP);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_MAG_FILTER, 
+                      GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_MIN_FILTER, 
+                      GL_LINEAR);
 
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
         height, width, 0, 
@@ -46,13 +87,38 @@ class Texture {
       glBindTexture(GL_TEXTURE_2D, id);
 
       glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32, w, h);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE,
+
+      glTexParameteri(GL_TEXTURE_2D,
+                      GL_TEXTURE_WRAP_T,
+                      GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_WRAP_S, 
+                      GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_MIN_FILTER, 
+                      GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_MAG_FILTER, 
+                      GL_LINEAR);
+
+      /* 
+       * Set up a texture evaluation function:
+       * REF (r): current interpolated texture coordinate.
+       * TEXTURE (Dt): depth texture value sampled from the 
+       *               currently bound depth texture.
+       * Says:
+       * Every fragment 'r' that has a depth value <= the
+       * the bound depth texture will have a value of 1.0,
+       *
+       * Formally:
+       *    result = r <= Dt ? 1.0 : 0
+       */
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_COMPARE_MODE,
                       GL_COMPARE_REF_TO_TEXTURE);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+      glTexParameteri(GL_TEXTURE_2D, 
+                      GL_TEXTURE_COMPARE_FUNC, 
+                      GL_LEQUAL);
 
       glFramebufferTexture(GL_FRAMEBUFFER,
                            GL_DEPTH_ATTACHMENT, 
@@ -101,37 +167,26 @@ class Texture {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
       static const GLenum draw_buffers[] = { GL_DEPTH_ATTACHMENT };
       glDrawBuffers(1, draw_buffers);
+      if (!check_fbo_status(fbo_id, GL_DRAW_FRAMEBUFFER)) {
+        exit(1); 
+      }
 
       glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+      glCullFace(GL_FRONT);
       glClearColor(1.0f,1.0f,1.0f,1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      {
-        GLenum fboStatus = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-        if (fboStatus != GL_FRAMEBUFFER_COMPLETE) {
-          std::string str;
-          std::cout << "Incomplete Framebuffer:" << fboStatus << std::endl;
-          printf("\tUNDEFINED: %d\n", 
-            GL_FRAMEBUFFER_UNDEFINED);
-          printf("\tINCOMPLETE_ATTACHMENT: %d\n", 
-            GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
-          printf("\tINCOMPLETE_MISSING_ATTACHMENT: %d\n",
-            GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
-          printf("\tUNSUPPORTED: %d\n", 
-            GL_FRAMEBUFFER_UNSUPPORTED);
-          printf("\tINCOMPLETE_LAYER_TARGETS: %d\n", 
-            GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS);
-          exit(1);
-        }
-      }
 
       GLuint per_id, view_id;
       GLuint model_id;
       GLuint e_id;
       per_id = glGetUniformLocation(prog_id, "M_per");
       view_id = glGetUniformLocation(prog_id, "M_cam");
-      glUniformMatrix4fv(per_id, 1, false, scene.orient.perspective(1400, 900));
-      glUniformMatrix4fv(view_id, 1, false, (GLfloat *)&view);
+      glUniformMatrix4fv(per_id, 1, false,
+        scene.orient.perspective(1400, 900));
+      glUniformMatrix4fv(view_id, 1, false, 
+        (const GLfloat *)&view);
 
       Data *data;
       GLint M_model_id;
@@ -142,7 +197,8 @@ class Texture {
         glBindVertexArray(data->vao);
 
         M_model_id = glGetUniformLocation(prog_id, "M_model");
-        glUniformMatrix4fv(M_model_id, 1, false, model.model());
+        glUniformMatrix4fv(M_model_id, 1, false,
+          model.model());
         glDrawArrays(GL_TRIANGLES, 0, data->size());
       } 
 
@@ -151,6 +207,7 @@ class Texture {
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glUseProgram(0);
       glDisable(GL_DEPTH_TEST);
+      glDisable(GL_CULL_FACE);
     }
 };
 

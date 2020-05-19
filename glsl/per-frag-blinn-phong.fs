@@ -77,7 +77,8 @@ void main(void) {
    *    texture returns (0,0,0) as color - since it is
    *    hidden in shadow
    */
-  vec3 shadowTexel = (textureProj(shadow_tex, shadow_coords) * vec4(1.0)).rgb;
+  vec3 shadowCoords = shadow_coords.xyz / shadow_coords.w;
+  float shadow = texture(shadow_tex, shadowCoords, 0.05);
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
@@ -86,7 +87,7 @@ void main(void) {
   int bound = min(num_lights, MAX_NUM_LIGHTS);
 
   float e = 2.0;
-  if (true || dist <= shadowTexel.x + e) {
+  if (shadow > 0.0) {
     for (i=0; i<bound; i++) {
       n = normalize(vNormal);
       v = normalize(vEye);
@@ -94,7 +95,7 @@ void main(void) {
       l = normalize(vLights[i].l);
       intensity = lights[i].intensity;
 
-      L = kdTexel * shadowTexel *intensity * max(0, dot(n, l)); 
+      L = shadow * intensity * max(0, dot(n, l)); 
       S = ks * intensity * pow(max(0, dot(n, h)), p); 
 
       c += (L+S);
