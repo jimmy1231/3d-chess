@@ -41,6 +41,28 @@
 #define print_mat3(prefix,m) PRINT_MAT(prefix, 3, 3, m)
 #define print_mat4(prefix,m) PRINT_MAT(prefix, 4, 4, m)
 
+glm::vec3 parse_vec3(std::string str) {
+  std::vector<float> parts;
+  std::string _s = str;
+  int i=0, j=0;
+  while (i < _s.length()) {
+    j = _s.find(" ", i);
+    if (j == std::string::npos) {
+      j = _s.length();
+    }
+
+    std::string substr = _s.substr(i, j-i);
+    float num = std::stof(substr);
+    parts.push_back(num);
+
+    i = j+1;
+  }
+
+  assert(parts.size() >= 3);
+  glm::vec3 vec(parts[0], parts[1], parts[2]);
+  return vec;
+}
+
 namespace gcc_test {
   glm::mat3 rot_about(const float &theta, const glm::vec3 &a) {
     // determine rotational basis

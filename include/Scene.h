@@ -9,147 +9,13 @@
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 
+#include "Light.h"
+#include "Model.h"
+#include "Orientation.h"
 #include "helpers.h"
 
+#define SCENE_DEBUG 1
 using json = nlohmann::json;
-
-glm::vec3 parse_vec3(std::string str) {
-  std::vector<float> parts;
-  std::string _s = str;
-  int i=0, j=0;
-  while (i < _s.length()) {
-    j = _s.find(" ", i);
-    if (j == std::string::npos) {
-      j = _s.length();
-    }
-
-    std::string substr = _s.substr(i, j-i);
-    float num = std::stof(substr);
-    parts.push_back(num);
-
-    i = j+1;
-  }
-
-  assert(parts.size() >= 3);
-  glm::vec3 vec(parts[0], parts[1], parts[2]);
-  return vec;
-}
-
-class Light {
-  public:
-    static const size_t Size = 6;
-    glm::vec3 position;
-    glm::vec3 intensity;
-
-    Light(std::string p, std::string i) 
-      : position(parse_vec3(p))
-      , intensity(parse_vec3(i)) {}
-};
-
-class Orientation {
-  public:
-    glm::mat4 view_;
-    glm::mat4 per_;
-    glm::mat4 scale_bias_;
-
-    glm::vec3 eye;
-    glm::vec3 gaze;
-    glm::vec3 top;
-
-    float fovy;
-    float zNear;
-    float zFar;
-
-    Orientation() {}
-    Orientation(std::string e, std::string g, std::string t,
-                float f, float n, float a) 
-      : eye(parse_vec3(e))
-      , gaze(parse_vec3(g))
-      , top(parse_vec3(t))
-      , fovy(f)
-      , zNear(n)
-      , zFar(a)
-    {
-      gaze = glm::normalize(gaze);
-    }
-
-    const GLfloat *view() {
-      // Compute the camera basis
-      glm::vec3 w, u, v;
-      w = -glm::normalize(gaze);
-      u = glm::normalize(glm::cross(top, w));
-      v = glm::cross(w, u);
-
-      // M_cam = [ u v w e ]^-1, where u, v, w are
-      // vec4 with the 4th index set to 0.
-      view_ = glm::inverse(glm::mat4(
-        glm::vec4(u,0),
-        glm::vec4(v,0),
-        glm::vec4(w,0),
-        glm::vec4(eye,1)
-      ));
-
-      return (const GLfloat *)&view_;
-    }
-
-    const GLfloat *scale_bias() {
-      scale_bias_ = glm::transpose(glm::mat4(
-        0.5, 0.0, 0.0, 0.5,
-        0.0, 0.5, 0.0, 0.5,
-        0.0, 0.0, 0.5, 0.5,
-        0.0, 0.0, 0.0, 1.0
-      ));
-
-      return (const GLfloat *)&scale_bias_;
-    }
-
-    const GLfloat *perspective(const float &width, const float &height) {
-      per_ = glm::perspective(
-        glm::radians(fovy), width/height,
-        zNear, zFar  
-      );
-      return (const GLfloat *)&per_;
-    }
-};
-
-class Model {
-  public:
-    glm::mat4 model_; 
-
-    Data *data_;
-
-    float rotationDeg_;
-    glm::vec3 rotationAxis_;
-    glm::vec3 scale_;
-    glm::vec3 translate_;
-
-    Model(Data *d, float r, std::string a, std::string s, std::string t)
-      : data_(d)
-      , rotationDeg_(r)
-      , rotationAxis_(parse_vec3(a))
-      , scale_(parse_vec3(s))
-      , translate_(parse_vec3(t)) {}
-
-    const GLfloat *model() {
-      glm::mat4 rot = gcc_test::rot_about(
-        glm::radians(rotationDeg_),
-        rotationAxis_);
-      glm::mat4 scale = glm::transpose(glm::mat4(
-        scale_[0], 0.0f, 0.0f, 0.0f,
-        0.0f, scale_[1], 0.0f, 0.0f,
-        0.0f, 0.0f, scale_[2], 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-      ));
-      glm::mat4 trans = glm::transpose(glm::mat4(
-        1.0f, 0.0f, 0.0f, translate_[0],
-        0.0f, 1.0f, 0.0f, translate_[1],
-        0.0f, 0.0f, 1.0f, translate_[2],
-        0.0f, 0.0f, 0.0f, 1.0f
-      ));
-      model_ = rot * scale * trans;
-      return (const GLfloat *)&model_;       
-    }
-};
 
 class Scene {
   public:
@@ -166,6 +32,7 @@ class Scene {
     glm::vec3 Ka_;
     int p;
 
+    std::unordered_map<std::string, Texture *> textures;
     std::unordered_map<std::string, Data *> objects;
     std::vector<Model> models;
 
@@ -236,21 +103,48 @@ class Scene {
         }
       }
 
+      {
+        auto textures = j["textures"];
+        assert(textures.is_array());
+
+        std::string id, filename;
+        Texture *tex;
+        json texJson;
+        int i;
+        for (i=0; i<textures.size(); i++) {
+          texJson = textures[i];
+          id = texJson["id"].get<std::string>();
+          filename = texJson["filename"].get<std::string>();
+
+          tex = new Texture(filename);
+          this->textures[id] = tex;
+        }
+      }
+
       // Models
       {
         auto models = j["models"];
         assert(models.is_array());
 
+        std::string object_id, tex_id;
+        Texture *tex;
         json modelJson;
         int i;
         for (i=0; i<models.size(); i++) {
-          std::string object_id;
-
           modelJson = models[i];
           object_id = modelJson["object_id"].get<std::string>();
-          assert(this->objects.count(object_id) > 0);
+          assert(this->objects.count(object_id) == 1);
+
+          tex = NULL;
+          if (modelJson.contains("tex_id")) {
+            tex_id = modelJson["tex_id"].get<std::string>();
+            assert(this->textures.count(tex_id) == 1);
+            tex = this->textures[tex_id];
+          }
+
           Model model(
             this->objects[object_id],
+            tex, 
             modelJson["rotation_deg"].get<float>(),
             modelJson["rotation_axis"].get<std::string>(),
             modelJson["scale"].get<std::string>(),
@@ -260,26 +154,79 @@ class Scene {
         }
       }
     }
+    void ld_shadow_maps(const std::string &vs,
+                        const std::string &fs) {
+      /*
+       * Load shadow by pre-rendering shadow map into a 
+       * texture framebuffer proxy. After this pre-render.
+       * Since we bind the shadow map texture to the 
+       * framebuffer, the resulting render (i.e. shadow
+       * map) will be stored in a GPU buffer referenced by
+       * our texture.
+       * We can then use this texture to generate shadows
+       * in our main render. Shadow map need not change
+       * unless objects/lights in our scene moves, in which
+       * case we need to re-render the shadow map.
+       */
+      GLuint shadow_prog_id = ld_shaders(vs, fs);
+
+      Light *light;
+      int i;
+      for (i=0; i<lights_.size(); i++) {
+        light = &lights_[i];
+        light->initShadow(shadow_prog_id, *this);
+#if SCENE_DEBUG
+        char screenshot_filename[30];
+        snprintf(screenshot_filename, 30,
+          "../shadow_map_%d.tga", i);
+
+        screenshot(light->shadow->fbo_id,
+                   screen::IMAGE_TYPE_GREYSCALE,
+                   GL_DEPTH_ATTACHMENT,
+                   WIDTH_PIXELS, HEIGHT_PIXELS,
+                   screenshot_filename);
+#endif
+      } 
+    }
     const GLfloat *Kd() {return (const GLfloat *)&Kd_; }
     const GLfloat *Ka() {return (const GLfloat *)&Ka_; }
     const GLfloat *Ks() {return (const GLfloat *)&Ks_; }
     const GLfloat *Ia() {return (const GLfloat *)&Ia_; }
     void SetLightsUniform(const GLuint prog,
-                          const char *posFormatStr,
-                          const char *intensityFormatStr) {
+                          const char *posFmtStr,
+                          const char *intensityFmtStr,
+                          const char *shadowFmtStr,
+                          const GLuint startIndex) {
       char id_name[100];
       Light *light;
+      int texUnitId;
       int i;
       for (i=0; i<lights_.size(); i++) {
         int id;
         light = &lights_[i];
-        snprintf(id_name, 100, posFormatStr, i);
+        snprintf(id_name, 100, posFmtStr, i);
         id = glGetUniformLocation(prog, id_name);   
         glUniform3fv(id, 1, (const GLfloat *)&light->position);
 
-        snprintf(id_name, 100, intensityFormatStr, i);
+        snprintf(id_name, 100, intensityFmtStr, i);
         id = glGetUniformLocation(prog, id_name);   
         glUniform3fv(id, 1, (const GLfloat *)&light->intensity);
+
+        /*
+         * Bind each light's shadow map to a preset location.
+         * The reason we have 'startIndex' is to leave it up
+         * to the caller to decide if they want to allocate 
+         * texture units for other textures (e.g. normal maps,
+         * model textures, etc.).
+         */
+        if (light->shadow != NULL) {
+          snprintf(id_name, 100, shadowFmtStr, i);
+          id = glGetUniformLocation(prog, id_name);
+          texUnitId = startIndex + i;
+
+          glUniform1i(id, texUnitId);
+          light->shadow->bind_to_unit(texUnitId); 
+        }
       } 
     }
 };

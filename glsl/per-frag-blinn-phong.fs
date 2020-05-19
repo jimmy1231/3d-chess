@@ -4,6 +4,7 @@
 struct Light {
   vec3 position;
   vec3 intensity;  
+  sampler2DShadow shadow;
 };
 
 struct VSLight {
@@ -28,17 +29,8 @@ uniform float p;
 uniform int num_lights;
 uniform Light lights[MAX_NUM_LIGHTS];
 uniform sampler2D tex;
-uniform sampler2DShadow shadow_tex;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
-
-vec3 maxf3(vec3 v1, vec3 v2) {
-  return vec3(
-    max(v1.x, v2.x),
-    max(v1.y, v2.y),
-    max(v1.z, v2.z)
-  );
-}
 
 vec3 minf3(vec3 v1, vec3 v2) {
   return vec3(
@@ -48,23 +40,11 @@ vec3 minf3(vec3 v1, vec3 v2) {
   );
 }
 
-vec3 powf3(vec3 v, float p) {
-  return vec3(
-    pow(v.x, p),
-    pow(v.y, p),
-    pow(v.z, p)
-  );
-}
-
 void main(void) {
   /* 
-   * L = Lambertian
-   * S = Specular
-   * A = Ambience
+   * L = Lambertian, S = Specular, A = Ambience
    */
-  vec3 L;
-  vec3 S;
-  vec3 A;
+  vec3 L, S, A;
 
   /*
    * textureProj will take as input a vec4 := (x,y,z,w),
@@ -78,23 +58,25 @@ void main(void) {
    *    hidden in shadow
    */
   vec3 shadowCoords = shadow_coords.xyz / shadow_coords.w;
-  float shadow = texture(shadow_tex, shadowCoords, 0.05);
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
   vec3 intensity;
+  sampler2DShadow shadow;
   int i;
   int bound = min(num_lights, MAX_NUM_LIGHTS);
 
   float e = 2.0;
-  if (shadow > 0.0) {
-    for (i=0; i<bound; i++) {
-      n = normalize(vNormal);
-      v = normalize(vEye);
-      h = normalize(vLights[i].h);
-      l = normalize(vLights[i].l);
-      intensity = lights[i].intensity;
+  for (i=0; i<bound; i++) {
+    n = normalize(vNormal);
+    v = normalize(vEye);
+    h = normalize(vLights[i].h);
+    l = normalize(vLights[i].l);
+    intensity = lights[i].intensity;
+    shadow = lights[i].shadow;
 
+    float s = texture(shadow, shadowCoords, 0.05);
+    if (s >= 0.0) {
       L = shadow * intensity * max(0, dot(n, l)); 
       S = ks * intensity * pow(max(0, dot(n, h)), p); 
 

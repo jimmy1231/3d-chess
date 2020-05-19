@@ -78,8 +78,8 @@ class Texture {
       glActiveTexture(0);
       glBindTexture(GL_TEXTURE_2D, 0);
     }
-    Texture(unsigned char *d, GLenum m, int w, int h) 
-      : data(d), mode(m), width(w), height(h) 
+    Texture(unsigned char *d, int w, int h) 
+      : data(d), width(w), height(h) 
     {
       glGenTextures(1, &id);
       glGenFramebuffers(1, &fbo_id);
@@ -176,7 +176,6 @@ class Texture {
       glCullFace(GL_FRONT);
       glClearColor(1.0f,1.0f,1.0f,1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
       GLuint per_id, view_id;
       GLuint model_id;

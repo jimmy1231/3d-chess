@@ -173,40 +173,6 @@ int main(int argc, char *argv[]) {
     return prog_id;
   };
 
-  Texture shadow(NULL,
-                 GL_COLOR_ATTACHMENT0,
-                 WIDTH_PIXELS, HEIGHT_PIXELS);
-  {
-    /*
-     * Load shadow by pre-rendering shadow map into a 
-     * texture framebuffer proxy. After this pre-render.
-     * Since we bind the shadow map texture to the 
-     * framebuffer, the resulting render (i.e. shadow
-     * map) will be stored in a GPU buffer referenced by
-     * our texture.
-     * We can then use this texture to generate shadows
-     * in our main render. Shadow map need not change
-     * unless objects/lights in our scene moves, in which
-     * case we need to re-render the shadow map.
-     */
-    GLuint shadow_prog_id = ld_shaders(
-      "../glsl/shadow-map.vs",
-      "../glsl/shadow-map.fs");
-
-    glm::vec3 light = scene.lights_[0].position;
-    glm::vec3 gaze = glm::vec3(0,0,0) - light;
-    Data data = *scene.objects["cube"];
-    shadow.shadow_map(shadow_prog_id,
-                      scene,
-                      scene.orient.gaze, scene.orient.top, light);
-    screenshot(shadow.fbo_id,
-               GL_DEPTH_ATTACHMENT,
-               WIDTH_PIXELS, HEIGHT_PIXELS,
-               "../shadow-screen.tga");
-  }
-
-  Texture tex1("../tex/cube-tex2.png");
-
   /*
    * Note: we do not need the M_vp (i.e. viewport transformation)
    * because OpenGL does this automatically for us in the
@@ -218,12 +184,10 @@ int main(int argc, char *argv[]) {
    * change in between frames, so we can create it once, and
    * reuse it.
   */
-  // GLuint prog_id = ld_shaders(
-  //     "../glsl/model-view-proj.vs",
-  //     "../glsl/per-frag-blinn-phong.fs");
-  GLuint prog_id = ld_shaders(
-      "../glsl/model-view-proj.vs",
-      "../glsl/per-frag-blinn-phong.fs");
+  scene.ld_shadow_maps("../glsl/shadow-map.vs", 
+                      "../glsl/shadow-map.fs");
+  GLuint prog_id = ld_shaders("../glsl/model-view-proj.vs", 
+                              "../glsl/per-frag-blinn-phong.fs");
 
   glfwSetScrollCallback(
     window,
@@ -264,7 +228,6 @@ int main(int argc, char *argv[]) {
     GLint Ia_id;
     GLint num_lights_id;
     GLint p_id;
-    GLint tex_id, shadow_tex_id;
     GLint M_scale_bias_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
@@ -276,8 +239,6 @@ int main(int argc, char *argv[]) {
     num_lights_id = glGetUniformLocation(prog_id, "num_lights");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
-    tex_id = glGetUniformLocation(prog_id, "tex");
-    shadow_tex_id = glGetUniformLocation(prog_id, "shadow_tex");
 
     // Send uniform variables to device
     glUniformMatrix4fv(M_per_id, 1, false, 
@@ -290,24 +251,31 @@ int main(int argc, char *argv[]) {
     glUniform3fv(ka_id, 1, scene.Ka());
     glUniform3fv(Ia_id, 1, scene.Ia());
     glUniform1i(num_lights_id, scene.lights_.size());
-    scene.SetLightsUniform(prog_id,
-      "lights[%d].position", "lights[%d].intensity");
     glUniform1f(p_id, scene.p);
-    glUniform1i(tex_id, 0);
-    glUniform1i(shadow_tex_id, 1);
+    scene.SetLightsUniform(prog_id, 
+                           "lights[%d].position",
+                           "lights[%d].intensity",
+                           "lights[%d].shadow",
+                           1);
 
-    tex1.bind_to_unit(0);
-    shadow.bind_to_unit(1);
-
+    Texture *tex;
     Data *data;
-    GLint M_model_id;
+    GLint M_model_id, tex_id;
     for (Model &model : scene.models) {
       data = model.data_;
+      tex = model.tex_;
       data->bind_VAO();
       glBindVertexArray(data->vao);
 
       M_model_id = glGetUniformLocation(prog_id, "M_model");
-      glUniformMatrix4fv(M_model_id, 1, false, model.model());
+
+      // Bind texture for model
+      if (tex != NULL) {
+        tex_id = glGetUniformLocation(prog_id, "tex");
+        glUniformMatrix4fv(M_model_id, 1, false, model.model());
+        glUniform1i(tex_id, 0);
+        tex->bind_to_unit(0);
+      }
       glDrawArrays(GL_TRIANGLES, 0, data->size());
     } 
 

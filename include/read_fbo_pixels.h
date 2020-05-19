@@ -4,8 +4,16 @@
 #include <cstdio>
 #include <glad/glad.h>
 
+namespace screen {
+  enum ImageType {
+    IMAGE_TYPE_RGB = 2;
+    IMAGE_TYPE_GREYSCALE = 3;
+  }
+}
+
 void screenshot(const GLuint FBO,
                 const GLenum mode,
+                const ImageType type, 
                 const int width,
                 const int height,
                 const char *output_file)
@@ -31,9 +39,22 @@ void screenshot(const GLuint FBO,
     unsigned char descriptor;   // Descriptor bits
   } tga_header;
 
+  unsigned char imagetype, bpp;
+  switch (type) {
+    case IMAGE_TYPE_GREYSCALE:
+      imagetype = 3;
+      bpp = 8;
+      break;
+    default:
+    case IMAGE_TYPE_RGB:
+      imagetype = 2;
+      bpp = 24;
+      break;
+  }
+
   memset(&tga_header, 0, sizeof(tga_header));
-  tga_header.imagetype = 3;
-  tga_header.bpp = 8;
+  tga_header.imagetype = imagetype;
+  tga_header.bpp = bpp;
   tga_header.width = (short)width;
   tga_header.height = (short)height;
 
