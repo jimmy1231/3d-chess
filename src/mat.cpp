@@ -1,6 +1,3 @@
-#ifndef GCC_TEST_TRANSFORMATION_MATRICES
-#define GCC_TEST_TRANSFORMATION_MATRICES
-
 #include <glm/glm.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/geometric.hpp>
@@ -11,8 +8,17 @@
 #include <cmath>
 
 #include "helpers.h"
+#include "lib.hpp"
 
 #define _DEBUG_MAT_LOGS_ 0 
+
+
+shadow_bias{
+  0.5, 0.0, 0.0, 0.0,
+  0.0, 0.5, 0.0, 0.0,
+  0.0, 0.0, 0.5, 0.0,
+  0.5, 0.5, 0.5, 1.0
+};
 
 /*
  * Matrix that transforms coordinates from camera
@@ -30,10 +36,11 @@
  * Inputs:
  *  GLfloat &top : y=top plane 
  */
-void init_per_mat(const int width, const int height,
-                  const float n, const float f,
-                  const float fov_deg,
-                  glm::mat4 &M_per) {
+glm::mat4 mat::perspective(const int width,
+                           const int height,
+                           const float n, const float f,
+                           const float fov_deg)
+{
   /*
    * Takes care of clipping as well as customized FOV.
    *
@@ -67,7 +74,8 @@ void init_per_mat(const int width, const int height,
   aspect = ((float)width) / ((float)height);
   zNear = n;
   zFar = f;
-  M_per = glm::perspective(fovy, aspect, zNear, zFar);
+  glm::mat4 M_per = glm::perspective(fovy, aspect, zNear, zFar);
+  return M_per;
 }
 
 /*
@@ -79,10 +87,10 @@ void init_per_mat(const int width, const int height,
  * Outputs:
  *  glm::mat4 &M_cam : the Camera Transformation Matrix
  */
-void init_camera_mat(const glm::vec3 &g,
-                     const glm::vec3 &t,
-                     const glm::vec3 &e,
-                     glm::mat4 &M_cam) {
+glm::mat4 mat::view(const glm::vec3 &g,
+               const glm::vec3 &t,
+               const glm::vec3 &e)
+{
   // Compute the camera basis
   glm::vec3 w, u, v;
   w = -glm::normalize(g);
@@ -91,7 +99,7 @@ void init_camera_mat(const glm::vec3 &g,
 
   // M_cam = [ u v w e ]^-1, where u, v, w are
   // vec4 with the 4th index set to 0.
-  M_cam = glm::inverse(glm::mat4(
+  glm::mat4 M_cam = glm::inverse(glm::mat4(
     glm::vec4(u,0),
     glm::vec4(v,0),
     glm::vec4(w,0),
@@ -104,6 +112,49 @@ void init_camera_mat(const glm::vec3 &g,
   print_vec3("V:",v);
   print_mat4("M_cam:",M_cam);
 #endif
+  return M_cam;
 }
 
-#endif /* GCC_TEST_TRANSFORMATION_MATRICES */
+glm::mat3 mat::rot(const float &theta,
+                   const glm::vec3 &a)
+{
+  // determine rotational basis
+  glm::vec3 w, u, v;
+  w = glm::normalize(a);
+
+  /*
+   * (1) Construct an arbitrary vector t which is not colinear
+   *     with w.
+   * (2) Find u by taking the cross product of t and w. This
+   *     works since t and w are not colinear (i.e. not on the
+   *     same line), their cross product would form a vector
+   *     which is perpendicular to w.
+   */
+  glm::vec3 t = w;
+  int minInd = 0;
+  {
+    GLfloat min = (GLfloat)std::numeric_limits<float>::max();
+    int i;
+    for (i=0; i<3; i++) {
+      if (w[i] < min) {
+        minInd = i;
+        min = w[i];
+      }
+    } 
+  } 
+  t[minInd] = 1;
+
+  u = glm::normalize(glm::cross(t,w));
+  v = glm::cross(w, u);
+
+  // construct rotation matrix
+  glm::mat3 R_inv(u, v, w);
+  glm::mat3 R = glm::transpose(R_inv);
+  glm::mat3 Rot = glm::transpose(glm::mat3(
+    cos(theta), -sin(theta), 0,
+    sin(theta), cos(theta), 0,
+    0, 0, 1
+  ));
+
+  return R_inv*Rot*R;
+}

@@ -1,10 +1,11 @@
-#ifndef GCC_TEST_LOAD_OBJ
-#define GCC_TEST_LOAD_OBJ
+#ifndef __RENDER_LOAD_OBJ_H__
+#define __RENDER_LOAD_OBJ_H__
 
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <list>
+#include "lib.hpp"
 #include "helpers.h"
 
 #define SPACE_CHAR " "
@@ -13,48 +14,8 @@
 #define GLM_VEC2_ZERO glm::vec2(0.0f,0.0f)
 #define INVALID_FACE_ID 2147483647
 
-namespace ld_o {
-  typedef struct V { /* Vertices */ 
-    float x;
-    float y;
-    float z;
-    float w;
-  } V;
 
-  typedef struct VT { /* Textures */ 
-    float u;
-    float v;
-    float w;
-  } VT;
-
-  typedef struct VN { /* Vertex Normals */
-    float x;
-    float y;
-    float z;
-  } VN;
-
-  typedef struct VP { /* Free-form Geometry Statement */
-    float u;
-    float v;
-    float w;
-  } VP;
-
-  typedef struct F { /* One vertex of a Face - polygon */
-    int v;
-    int vt;
-    int vn;
-  } F;
-  
-  typedef struct VBO_STRUCT {
-    glm::vec3 v;
-    glm::vec3 n;
-    glm::vec2 t;
-  } VBO_STRUCT;
-
-  typedef std::vector<F *> Face;
-}
-
-ld_o::V* handle_v(std::list<std::string> &chks) {
+static ld_o::V* handle_v(std::list<std::string> &chks) {
   ld_o::V *v;
   v = (ld_o::V *)malloc(sizeof(ld_o::V));
   if (v == NULL) {
@@ -77,7 +38,7 @@ ld_o::V* handle_v(std::list<std::string> &chks) {
   return v;
 }
 
-ld_o::VN* handle_vn(std::list<std::string> &chks) {
+static ld_o::VN* handle_vn(std::list<std::string> &chks) {
   ld_o::VN *vn;
   vn = (ld_o::VN *)malloc(sizeof(ld_o::VN));
   if (vn == NULL) {
@@ -95,7 +56,7 @@ ld_o::VN* handle_vn(std::list<std::string> &chks) {
   return vn;
 }
 
-ld_o::Face handle_f(std::list<std::string> &chks) {
+static ld_o::Face handle_f(std::list<std::string> &chks) {
   ld_o::Face face;
 
   std::list<int> v, vt, vn;
@@ -164,7 +125,7 @@ ld_o::Face handle_f(std::list<std::string> &chks) {
   return face;
 }
 
-ld_o::VT* handle_vt(std::list<std::string> &chks) {
+static ld_o::VT* handle_vt(std::list<std::string> &chks) {
   ld_o::VT *vt;
   vt = (ld_o::VT *)malloc(sizeof(ld_o::VT));
   if (vt == NULL) {
@@ -184,7 +145,7 @@ ld_o::VT* handle_vt(std::list<std::string> &chks) {
   return vt;  
 }
 
-ld_o::VP* handle_vp(std::list<std::string> &chks) {
+static ld_o::VP* handle_vp(std::list<std::string> &chks) {
   ld_o::VP *vp;
   vp = (ld_o::VP *)malloc(sizeof(ld_o::VP));
   if (vp == NULL) {
@@ -202,17 +163,6 @@ ld_o::VP* handle_vp(std::list<std::string> &chks) {
   }
 
   return vp;
-}
-
-void print_vbo(const std::vector<ld_o::VBO_STRUCT> &data) {
-  int i;
-  for (i=0; i<data.size(); i++) {
-    const ld_o::VBO_STRUCT *v = &data[i];
-    printf("[%d]\n", i);
-    print_vec3("\tv:", v->v);
-    print_vec3("\tn:", v->n);
-    print_vec2("\tt:", v->t);
-  }
 }
 
 void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
@@ -362,4 +312,4 @@ void load_obj(std::string filepath, std::vector<ld_o::VBO_STRUCT> &data) {
     (int)data.size(), (int)data.size()/3);
 }
 
-#endif /* GCC_TEST_LOAD_OBJ */
+#endif /* __RENDER_LOAD_OBJ_H__ */

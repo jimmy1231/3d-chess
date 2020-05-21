@@ -26,12 +26,12 @@
 #include <glm/geometric.hpp>
 
 #include "helpers.h"
+#include "lib.hpp"
+#include "mat.hpp"
 
 // Custom header files
 #include "ShaderProg.h"
-#include "Data.h"
-#include "Scene.h"
-#include "Texture.h"
+#include "types.hpp"
 #include "bind_shaders.h"
 #include "transformation_matrices.h"
 #include "read_fbo_pixels.h"
@@ -61,7 +61,7 @@ bool LEFT_MOUSE_BTN_PRESSED = false;
 
 void window_callback_scroll(const double &xoffset, const double &yoffset) {
   // Get direction of gaze, and adjust towards/away that direction
-  Orientation *orient = &scene.orient;
+  Orientation *orient = scene.orient;
   glm::vec3 _d = 0.2f * glm::normalize(orient->gaze);
   
   if (yoffset > 0) {
@@ -108,7 +108,7 @@ void window_callback_cursor_pos(float xpos, float ypos) {
    */
   
   // Rotate about y-axis by rad
-  Orientation *orient = &scene.orient;
+  Orientation *orient = scene.orient;
 
   float rad;
   glm::vec3 axis;
@@ -223,7 +223,6 @@ int main(int argc, char *argv[]) {
     glUseProgram(prog_id);
 
     GLint M_proj_id, M_per_id, M_cam_id;
-    GLint M_light_id;
     GLint ks_id, kd_id, ka_id;
     GLint Ia_id;
     GLint num_lights_id;
@@ -231,7 +230,6 @@ int main(int argc, char *argv[]) {
     GLint M_scale_bias_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
-    M_light_id = glGetUniformLocation(prog_id, "M_light");
     M_scale_bias_id = glGetUniformLocation(prog_id, "M_scale_bias");
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
@@ -242,28 +240,28 @@ int main(int argc, char *argv[]) {
 
     // Send uniform variables to device
     glUniformMatrix4fv(M_per_id, 1, false, 
-      scene.orient.perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
-    glUniformMatrix4fv(M_cam_id, 1, false, scene.orient.view());
-    glUniformMatrix4fv(M_light_id, 1, false, (GLfloat *)&shadow.view);
-    glUniformMatrix4fv(M_scale_bias_id, 1, false, scene.orient.scale_bias());
+      scene.orient->perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
+    glUniformMatrix4fv(M_cam_id, 1, false, scene.orient->view());
+    glUniformMatrix4fv(M_scale_bias_id, 1, false, scene.orient->scale_bias());
     glUniform3fv(ks_id, 1, scene.Ks());
     glUniform3fv(kd_id, 1, scene.Kd());
     glUniform3fv(ka_id, 1, scene.Ka());
     glUniform3fv(Ia_id, 1, scene.Ia());
     glUniform1i(num_lights_id, scene.lights_.size());
     glUniform1f(p_id, scene.p);
-    scene.SetLightsUniform(prog_id, 
+    scene.ld_lights_uniform(prog_id, 
                            "lights[%d].position",
                            "lights[%d].intensity",
                            "lights[%d].shadow",
+                           "lights[%d].shadowMat",
                            1);
 
     Texture *tex;
     Data *data;
     GLint M_model_id, tex_id;
-    for (Model &model : scene.models) {
-      data = model.data_;
-      tex = model.tex_;
+    for (Model *&model : scene.models) {
+      data = model->data_;
+      tex = model->tex_;
       data->bind_VAO();
       glBindVertexArray(data->vao);
 
@@ -272,7 +270,7 @@ int main(int argc, char *argv[]) {
       // Bind texture for model
       if (tex != NULL) {
         tex_id = glGetUniformLocation(prog_id, "tex");
-        glUniformMatrix4fv(M_model_id, 1, false, model.model());
+        glUniformMatrix4fv(M_model_id, 1, false, model->model());
         glUniform1i(tex_id, 0);
         tex->bind_to_unit(0);
       }

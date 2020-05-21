@@ -5,11 +5,13 @@ struct Light {
   vec3 position;
   vec3 intensity;  
   sampler2DShadow shadow;
+  mat4 shadowMat;
 };
 
 struct VSLight {
   vec3 l;
   vec3 h;
+  vec4 shadowCoords;
 };
 
 // Interpolated color - based on vColor in the vertex shader (from GPU rasterizer)
@@ -19,7 +21,6 @@ in vec3 vNormal;
 in vec2 vTex; 
 in vec3 vEye;
 in VSLight vLights[MAX_NUM_LIGHTS];
-in vec4 shadow_coords;
 
 uniform vec3 Ia;
 uniform vec3 ka;
@@ -57,10 +58,10 @@ void main(void) {
    *    texture returns (0,0,0) as color - since it is
    *    hidden in shadow
    */
-  vec3 shadowCoords = shadow_coords.xyz / shadow_coords.w;
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
+  vec3 shadow_coords, shadowCoords;
   vec3 intensity;
   sampler2DShadow shadow;
   int i;
@@ -68,6 +69,9 @@ void main(void) {
 
   float e = 2.0;
   for (i=0; i<bound; i++) {
+    shadow_coords = vLights[i].shadowCoords;
+    shadowCoords = shadow_coords.xyz / shadow_coords.w;
+
     n = normalize(vNormal);
     v = normalize(vEye);
     h = normalize(vLights[i].h);

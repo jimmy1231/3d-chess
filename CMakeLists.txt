@@ -13,7 +13,14 @@ add_subdirectory(${ROOT}/glfw glfw)
 add_subdirectory(${ROOT}/glad glad)
 find_package(OpenGL REQUIRED)
 
-add_executable(render main.cpp)
+add_executable(render main.cpp 
+					  ${ROOT}/src/Scene.cpp
+					  ${ROOT}/src/Model.cpp
+					  ${ROOT}/src/Orientation.cpp
+					  ${ROOT}/src/Light.cpp
+					  ${ROOT}/src/Texture.cpp
+					  ${ROOT}/src/Data.cpp)
+					  
 include_directories(AFTER ${ROOT}/include)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${OPENGL_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${ROOT}/glfw/include)

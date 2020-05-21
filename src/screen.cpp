@@ -1,22 +1,12 @@
-#ifndef __RENDER_READ_FBO_PIXELS_H__
-#define __RENDER_READ_FBO_PIXELS_H__
-
-#include <cstdio>
 #include <glad/glad.h>
+#include "lib.hpp"
 
-namespace screen {
-  enum ImageType {
-    IMAGE_TYPE_RGB = 2;
-    IMAGE_TYPE_GREYSCALE = 3;
-  }
-}
-
-void screenshot(const GLuint FBO,
-                const GLenum mode,
-                const ImageType type, 
-                const int width,
-                const int height,
-                const char *output_file)
+void screen::screenshot(const GLuint FBO,
+                        const GLenum mode,
+                        const screen::ImageType type, 
+                        const int width,
+                        const int height,
+                        const char *output_file)
 {
   /* 
    * Tightly pack - not used due to memory alignment
@@ -40,6 +30,7 @@ void screenshot(const GLuint FBO,
   } tga_header;
 
   unsigned char imagetype, bpp;
+  using namespace screen;
   switch (type) {
     case IMAGE_TYPE_GREYSCALE:
       imagetype = 3;
@@ -78,5 +69,3 @@ void screenshot(const GLuint FBO,
   free(data);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-#endif /* __RENDER_READ_FBO_PIXELS_H__ */

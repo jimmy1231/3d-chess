@@ -1,12 +1,14 @@
-#ifndef GCC_TEST_HELPERS
-#define GCC_TEST_HELPERS
+#ifndef __RENDER_HELPERS_H__
+#define __RENDER_HELPERS_H__
 
+#include <glad/glad.h>
 #include <math.h>
 #include <limits>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/geometric.hpp>
 #include <stdio.h>
+#include <vector>
 #include <sstream>
 #include <iostream>
 
@@ -41,7 +43,19 @@
 #define print_mat3(prefix,m) PRINT_MAT(prefix, 3, 3, m)
 #define print_mat4(prefix,m) PRINT_MAT(prefix, 4, 4, m)
 
-glm::vec3 parse_vec3(std::string str) {
+
+inline void print_vbo(const std::vector<ld_o::VBO_STRUCT> &data) {
+  int i;
+  for (i=0; i<data.size(); i++) {
+    const ld_o::VBO_STRUCT *v = &data[i];
+    printf("[%d]\n", i);
+    print_vec3("\tv:", v->v);
+    print_vec3("\tn:", v->n);
+    print_vec2("\tt:", v->t);
+  }
+}
+
+inline glm::vec3 parse_vec3(std::string str) {
   std::vector<float> parts;
   std::string _s = str;
   int i=0, j=0;
@@ -63,49 +77,4 @@ glm::vec3 parse_vec3(std::string str) {
   return vec;
 }
 
-namespace gcc_test {
-  glm::mat3 rot_about(const float &theta, const glm::vec3 &a) {
-    // determine rotational basis
-    glm::vec3 w, u, v;
-    w = glm::normalize(a);
-
-    /*
-     * (1) Construct an arbitrary vector t which is not colinear
-     *     with w.
-     * (2) Find u by taking the cross product of t and w. This
-     *     works since t and w are not colinear (i.e. not on the
-     *     same line), their cross product would form a vector
-     *     which is perpendicular to w.
-     */
-    glm::vec3 t = w;
-    int minInd = 0;
-    {
-      GLfloat min = (GLfloat)std::numeric_limits<float>::max();
-      int i;
-      for (i=0; i<3; i++) {
-        if (w[i] < min) {
-          minInd = i;
-          min = w[i];
-        }
-      } 
-    } 
-    t[minInd] = 1;
-
-    u = glm::normalize(glm::cross(t,w));
-    v = glm::cross(w, u);
-    
-    // construct rotation matrix
-    glm::mat3 R_inv(u, v, w);
-    glm::mat3 R = glm::transpose(R_inv);
-    glm::mat3 Rot = glm::transpose(glm::mat3(
-      cos(theta), -sin(theta), 0,
-      sin(theta), cos(theta), 0,
-      0, 0, 1
-    ));
-   
-    return R_inv*Rot*R;
-  }
-}
-
-#endif
-
+#endif /* __RENDER_HELPERS_H__ */

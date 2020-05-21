@@ -1,11 +1,40 @@
-#ifndef GCC_TEST_BIND_VAO
-#define GCC_TEST_BIND_VAO
-
 #include <glad/glad.h>
-#include <glm/vec3.hpp>
-#include <vector>
+#include "lib.h"
 
-#include "load_obj.h"
+void bind_tex_fbo(const GLuint &TEX, GLuint &FBO) {
+  GLuint _FBO;
+  
+  glGenFramebuffers(1, &_FBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, _FBO);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    GL_TEXTURE_2D, TEX, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  FBO = _FBO;
+}
+
+void bind_tex(const unsigned char *data,
+						  const int width,
+						  const int height,
+						  const GLuint textureUnit,
+						  GLuint &TEX) {
+	GLuint _TEX;
+	glGenTextures(1, &_TEX);
+	glActiveTexture(textureUnit);
+	glBindTexture(GL_TEXTURE_2D, _TEX);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+		height, width, 0, 
+		GL_RGB, GL_UNSIGNED_BYTE, data);
+
+	TEX = _TEX;
+	printf("Initialized texture\n");
+}
 
 void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
   /*
@@ -110,4 +139,119 @@ void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
   VAO = _VAO;
 }
 
-#endif
+unsigned char *load_tex(const std::string &filepath,
+                        int &width,
+                        int &height) {
+  unsigned char *data;
+  /*
+   * Basically we just have to reverse the bytes
+   * to make it bottom up - since OpenGL processes
+   * textures from the bottom-left pixel to the
+   * top-right pixel (rather than top-left to bottom-
+   * right), like usual
+   */
+  cimg_library::CImg<unsigned char> img;
+  img.load(filepath.c_str());
+
+  int N = clamp_dim(img.height());
+  int M = clamp_dim(img.width());
+  printf("Image loaded: %dx%d\n", N, M);
+
+  data = (unsigned char *)malloc(3*N*M*sizeof(unsigned char));;
+  int x, y, _y;
+  for (y=0, _y=N-1; y<N; y++, _y--) {
+    for (x=0; x<M; x++) {
+      unsigned char r, g, b;
+      int loc = LOC(x,y,M);
+
+      r = img(x, _y, 0, 0);
+      g = img(x, _y, 0, 1);
+      b = img(x, _y, 0, 2);
+
+      data[loc] = r;
+      data[loc+1] = g;
+      data[loc+2] = b;
+    }
+  }
+
+  printf("Image transferred\n");
+  width = M;
+  height = N;
+  return data;
+}
+
+void bind_shaders(const std::vector<ShaderProg> &shader_progs,
+                  GLuint &prog_id)
+{
+  std::vector<GLuint> shaders;
+
+  GLuint s;
+  GLint status;
+  int i;
+  for (i=0; i<shader_progs.size(); i++) {
+    const ShaderProg *shader_prog = &shader_progs[i]; 
+
+    s = glCreateShader(shader_prog->type);
+    GLchar *code = (GLchar *)shader_prog->code.c_str();
+    glShaderSource(s, 1, &code, 0);
+    glCompileShader(s);
+     
+    // Check shader compile status
+    glGetShaderiv(s, GL_COMPILE_STATUS, &status);
+    if (!status) {
+      GLchar *error_log;
+      GLint log_length;
+      glGetShaderiv(s, GL_INFO_LOG_LENGTH, &log_length);
+
+      error_log = (GLchar *)malloc(log_length*sizeof(GLchar));
+      glGetShaderInfoLog(s, log_length, &log_length, error_log);
+      printf("Shader <%s> failed to compile: %s\n",
+        shader_prog->filename.c_str(),
+        error_log);
+      
+      // clean up error log (free)
+      int _i;
+      for (_i=0; _i<shaders.size(); i++) {
+        glDeleteShader(shaders[_i]);
+      }
+      free(error_log);
+
+      return;
+    } 
+    
+    printf("shader compiled successfully: %s\n",
+      shader_prog->filename.c_str());
+    shaders.push_back(s);
+  } 
+
+  // finally, link all shaders to program
+  GLuint prog = glCreateProgram();
+  for (i=0; i<shaders.size(); i++) {
+    glAttachShader(prog, shaders[i]);
+  }
+  glLinkProgram(prog);
+
+  // Check for errors
+  glGetProgramiv(prog, GL_LINK_STATUS, (int *)&status);
+  if (!status) {
+    GLchar *error_log;
+    GLint log_length;
+    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &log_length);
+
+    error_log = (GLchar *)malloc(log_length*sizeof(GLchar));
+    glGetProgramInfoLog(prog, log_length, &log_length, error_log);
+    printf("Error linking program: %s\n", error_log);
+
+    // clean up resources
+    glDeleteProgram(prog);
+    int _i;
+    for (_i=0; i<shaders.size(); _i++) {
+      glDeleteShader(shaders[_i]);
+    }
+    free(error_log);
+    
+    return;
+  }
+
+  prog_id = prog;
+}
