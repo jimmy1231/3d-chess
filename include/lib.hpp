@@ -1,37 +1,12 @@
 #ifndef __RENDER_LIB_H__
 #define __RENDER_LIB_H__
 
+#include <vector>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/mat4x4.hpp>
 
-void 
-bind_tex(const unsigned char *data,
-			   const int width,
-			   const int height,
-			   const GLuint textureUnit,
-			   GLuint &TEX);
-
-void 
-bind_tex_fbo(const GLuint &TEX,
-    			   GLuint &FBO);
-
-void 
-bind_vao(const std::vector<ld_o::VBO_STRUCT> &data,
-         GLuint &VAO);
-
-unsigned char *
-load_tex(const std::string &filepath,
-         int &width,
-         int &height);
-
-void 
-bind_shaders(const std::vector<ShaderProg> &shader_progs,
-             GLuint &prog_id);
-
-void 
-load_obj(std::string filepath
-         std::vector<ld_o::VBO_STRUCT> &data);
+#include "ShaderProg.h"
 
 namespace ld_o {
   typedef struct V { /* Vertices */ 
@@ -73,6 +48,34 @@ namespace ld_o {
 
   typedef std::vector<F *> Face;
 }
+
+void 
+bind_tex(const unsigned char *data,
+			   const int width,
+			   const int height,
+			   const GLuint textureUnit,
+			   GLuint &TEX);
+
+void 
+bind_tex_fbo(const GLuint &TEX,
+    			   GLuint &FBO);
+
+void 
+bind_vao(const std::vector<ld_o::VBO_STRUCT> &data,
+         GLuint &VAO);
+
+unsigned char *
+load_tex(const std::string &filepath,
+         int &width,
+         int &height);
+
+void 
+bind_shaders(const std::vector<ShaderProg> &shader_progs,
+             GLuint &prog_id);
+
+void 
+load_obj(std::string filepath,
+         std::vector<ld_o::VBO_STRUCT> &data);
 
 namespace screen {
   enum class ImageType {

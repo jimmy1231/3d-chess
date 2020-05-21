@@ -32,12 +32,12 @@ void screen::screenshot(const GLuint FBO,
   unsigned char imagetype, bpp;
   using namespace screen;
   switch (type) {
-    case IMAGE_TYPE_GREYSCALE:
+    case ImageType::IMAGE_TYPE_GREYSCALE:
       imagetype = 3;
       bpp = 8;
       break;
     default:
-    case IMAGE_TYPE_RGB:
+    case ImageType::IMAGE_TYPE_RGB:
       imagetype = 2;
       bpp = 24;
       break;

@@ -9,7 +9,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 
-#include "load_obj.h"
+#include "lib.hpp"
 #include "types_decl.h"
 
 

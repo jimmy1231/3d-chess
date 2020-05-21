@@ -1,5 +1,6 @@
 #include "types.hpp"
 #include "lib.hpp"
+#include "helpers.h"
 
 Data::Data(const char *f) : filename(f) {
   /*

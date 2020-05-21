@@ -32,9 +32,6 @@
 // Custom header files
 #include "ShaderProg.h"
 #include "types.hpp"
-#include "bind_shaders.h"
-#include "transformation_matrices.h"
-#include "read_fbo_pixels.h"
 
 #define _DEBUG_LOOP_LOGS_ 0
 // #define DEBUG_MODE
@@ -124,7 +121,7 @@ void window_callback_cursor_pos(float xpos, float ypos) {
     axis = normalize(u);
   }
   
-  R = gcc_test::rot_about(rad, axis);
+  R = mat::rot(rad, axis);
   orient->eye = R*orient->eye;
   orient->gaze = glm::normalize(
     glm::vec3(0.0f,0.0f,0.0f)-orient->eye);

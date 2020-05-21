@@ -1,5 +1,9 @@
+#include <fstream>
 #include <glad/glad.h>
-#include "lib.h"
+#include "lib.hpp"
+
+#include <CImg/CImg.h>
+
 
 void bind_tex_fbo(const GLuint &TEX, GLuint &FBO) {
   GLuint _FBO;
@@ -137,6 +141,10 @@ void bind_vao(const std::vector<ld_o::VBO_STRUCT> &data, GLuint &VAO) {
 
   printf("Initialized VAO\n");
   VAO = _VAO;
+}
+
+inline int LOC(int x, int y, int width) {
+  return (y * width + x) * 3;
 }
 
 unsigned char *load_tex(const std::string &filepath,

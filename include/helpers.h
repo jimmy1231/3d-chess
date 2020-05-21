@@ -12,6 +12,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "lib.hpp"
+
 #define PRINT_VEC(prefix,n,v) \
   {int pv_i; \
   std::cout << prefix << " ["; \

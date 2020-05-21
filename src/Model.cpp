@@ -3,6 +3,7 @@
 
 #include "mat.hpp"
 #include "types.hpp"
+#include "helpers.h"
 
 
 Model::Model(Data *d, Texture *t, float r, 

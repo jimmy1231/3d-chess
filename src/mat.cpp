@@ -4,16 +4,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <stdio.h>
+#include <fstream>
 #include <iostream>
 #include <cmath>
 
 #include "helpers.h"
+#include "mat.hpp"
 #include "lib.hpp"
 
 #define _DEBUG_MAT_LOGS_ 0 
 
 
-shadow_bias{
+glm::mat4 shadow_bias{
   0.5, 0.0, 0.0, 0.0,
   0.0, 0.5, 0.0, 0.0,
   0.0, 0.0, 0.5, 0.0,

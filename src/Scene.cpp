@@ -8,6 +8,7 @@
 
 #include "lib.hpp"
 #include "types.hpp"
+#include "helpers.h"
 
 #define SCENE_DEBUG 1
 using json = nlohmann::json;
@@ -168,11 +169,11 @@ void Scene::ld_shadow_maps(const std::string &nvs,
     char screenshot_filename[30];
     snprintf(screenshot_filename, 30, "../shadow_map_%d.tga", i);
 
-    screenshot(light->shadow->fbo_id,
-               GL_DEPTH_ATTACHMENT,
-               screen::IMAGE_TYPE_GREYSCALE,
-               this->WIDTH, this->HEIGHT,
-               screenshot_filename);
+    screen::screenshot(light->shadow->fbo_id,
+                       GL_DEPTH_ATTACHMENT,
+                       screen::ImageType::IMAGE_TYPE_GREYSCALE,
+                       this->WIDTH, this->HEIGHT,
+                       screenshot_filename);
 #endif
   } 
 }

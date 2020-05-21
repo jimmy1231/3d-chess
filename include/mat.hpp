@@ -7,20 +7,17 @@
 namespace mat {
   extern glm::mat4 shadow_bias;
 
-  glm::mat4
-  mat::perspective(const int width,
+  glm::mat4 perspective(const int width,
                              const int height,
                              const float n,
                              const float f,
                              const float fov_deg);
 
-  glm::mat4 
-  mat::view(const glm::vec3 &g,
+  glm::mat4 view(const glm::vec3 &g,
                       const glm::vec3 &t,
                       const glm::vec3 &e);
 
-  glm::mat3 
-  mat::rot(const float &theta,
+  glm::mat3 rot(const float &theta,
                      const glm::vec3 &a);
 }
 

@@ -1,6 +1,11 @@
 #ifndef GCC_TEST_SHADER_PROG
 #define GCC_TEST_SHADER_PROG
 
+#include <string>
+#include <fstream>
+#include <cstring>
+#include <sstream>
+
 class ShaderProg {
 	public:
     std::string filename;
