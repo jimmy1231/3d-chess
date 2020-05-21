@@ -77,6 +77,13 @@ void
 load_obj(std::string filepath,
          std::vector<ld_o::VBO_STRUCT> &data);
 
+GLuint
+load_shaders_simple(std::string nvs,
+                    std::string nfs);
+
+GLuint
+init_static_array_vbo(void *data, size_t size);
+
 namespace screen {
   enum class ImageType {
     IMAGE_TYPE_RGB,

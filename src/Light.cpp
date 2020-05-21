@@ -5,23 +5,22 @@
 #include "helpers.h"
 
 
-Light::Light(std::string p, std::string i) 
+Light::Light(std::string p, std::string i, glm::vec3 t) 
   : position(parse_vec3(p))
-  , intensity(parse_vec3(i)) {}
-
-void Light::initShadow(const GLuint prog, Scene &scene) {
-  shadow = new Texture(NULL, scene.WIDTH, scene.HEIGHT);
-
+  , intensity(parse_vec3(i)) 
+{
   glm::vec3 g, t, e;
   g = glm::vec3(0,0,0) - position;
-  t = scene.orient->top;
   e = position;
 
   view = mat::view(g, t, e);
-	per = mat::perspective(scene.WIDTH, scene.HEIGHT,
+  per = mat::perspective(scene.WIDTH, scene.HEIGHT,
                          1.0f, 100.0f,
                          30.0f);
+}
 
+void Light::initShadow(const GLuint prog, Scene &scene) {
+  shadow = new Texture(NULL, scene.WIDTH, scene.HEIGHT);
   shadow->shadow_map(prog, scene, per, view);
 }
 

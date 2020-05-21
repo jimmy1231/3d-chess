@@ -149,7 +149,7 @@ void Texture::shadow_map(const GLuint prog_id,
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
   static const GLenum draw_buffers[] = {GL_DEPTH_ATTACHMENT};
   glDrawBuffers(1, draw_buffers);
-  if (!check_fbo_status(fbo_id, GL_DRAW_FRAMEBUFFER)) {
+  if (!check_fbo_status(fbo_id, GL_FRAMEBUFFER)) {
     exit(1); 
   }
 
@@ -160,8 +160,6 @@ void Texture::shadow_map(const GLuint prog_id,
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   GLuint per_id, view_id;
-  GLuint model_id;
-  GLuint e_id;
   per_id = glGetUniformLocation(prog_id, "M_per");
   view_id = glGetUniformLocation(prog_id, "M_cam");
   glUniformMatrix4fv(per_id, 1, false,
@@ -173,7 +171,6 @@ void Texture::shadow_map(const GLuint prog_id,
   GLint M_model_id;
   for (Model *&model : scene.models) {
     data = model->data_;
-    std::cout << data->filename << std::endl;
     data->bind_VAO();
     glBindVertexArray(data->vao);
 

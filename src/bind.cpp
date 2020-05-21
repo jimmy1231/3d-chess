@@ -263,3 +263,65 @@ void bind_shaders(const std::vector<ShaderProg> &shader_progs,
 
   prog_id = prog;
 }
+
+GLuint
+init_static_array_vbo(void *data, size_t nbytes) {
+  GLuint vbo;
+  glGenBuffers(1, &vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  {
+    GLint _vbo;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &_vbo);
+    assert(_vbo == vbo);
+  }
+
+  glBufferData(GL_ARRAY_BUFFER, nbytes, data, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  return vbo;
+}
+
+GLuint
+init_VBO_STRUCT_vao(GLuint vbo, size_t stride) {
+  GLuint vao;
+  glGenVertexArrays(1, &vao); 
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBindVertexArray(vao);
+
+  {
+    GLint _vbo, _vao;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &_vbo);
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &_vao);
+    assert(_vbo == vbo);
+    assert(_vao == vao);
+  }
+  
+  size_t stride = sizeof(ld_o::VBO_STRUCT);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0,
+                        3, 
+                        GL_FLOAT, 
+                        GL_FALSE, 
+                        stride, 
+                        0);
+  
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 
+                        3, 
+                        GL_FLOAT, 
+                        GL_FALSE, 
+                        stride, 
+                        (void *)(3*sizeof(float)));
+
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(2,
+                        2, 
+                        GL_FLOAT, 
+                        GL_FALSE, 
+                        stride, 
+                        (void *)(6*sizeof(float)));
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+  return vao;
+}

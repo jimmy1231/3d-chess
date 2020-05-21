@@ -28,26 +28,36 @@ class Scene {
     glm::vec3 Ka_;
     int p;
 
+    Texture *shadow;
     std::unordered_map<std::string, Texture *> textures;
     std::unordered_map<std::string, Data *> objects;
     std::vector<Model *> models;
 
     Scene() {}
-    Scene(std::string);
+    Scene(std::string, int, int);
 
     const GLfloat *Kd();
     const GLfloat *Ka();
     const GLfloat *Ks();
     const GLfloat *Ia();
 
-    void ld_shadow_maps(const std::string &, const std::string &);
+    void ld_shadow_map(const std::string &, const std::string &);
     void ld_lights_uniform(const GLuint,
                           const char *,
                           const char *,
                           const char *,
                           const char *,
                           const GLuint);
+    glm::mat4 shadowMat();
 };
+
+class ShadowMap {
+	static const GLenum DRAW_BUFFERS[] = {GL_DEPTH_ATTACHMENT};
+	public:
+		ShadowMap(std::vector<Light> &,
+							std::string nvs,
+							std::string nfs);
+}
 
 class Model {
   public:
@@ -71,13 +81,10 @@ class Light {
     glm::mat4 view;
 
     static const size_t Size = 6;
-    Texture *shadow = NULL;
     glm::vec3 position;
     glm::vec3 intensity;
 
     Light(std::string, std::string);
-    void initShadow(const GLuint, Scene &);
-    glm::mat4 shadowMat();
 };
 
 class Texture {
@@ -92,8 +99,11 @@ class Texture {
     GLuint fbo_id;
     GLuint id;
 
+    int layers;
+
     Texture(std::string);
-    Texture(unsigned char *, int, int);
+    Texture(unsigned char *data, int w, int h, int layers);
+    Texture(int w, int h, int layers);
     Texture();
     ~Texture();
 
@@ -135,7 +145,6 @@ class Data {
 
     Data(const char *);
 
-    void bind_VAO();
     void print();
     size_t size();
 };

@@ -14,7 +14,11 @@
 using json = nlohmann::json;
 
 
-Scene::Scene(std::string n) : filename(n) {
+Scene::Scene(std::string n, int w, int h)
+  : filename(n)
+  , WIDTH(w)
+  , HEIGHT(h)
+{
   std::ifstream ifs(filename);
   if (!ifs.is_open()) {
     printf("Failed to open file: %s\n", filename.c_str());

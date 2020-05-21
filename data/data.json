@@ -73,10 +73,6 @@
       "id": "cube1",
       "type": "TEXTURE",
       "filename": "../tex/cube-tex.png"
-    },
-    {
-      "id": "shadow",
-      "type": "SHADOW"
     }
   ]
 }
