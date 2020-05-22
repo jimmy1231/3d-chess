@@ -89,7 +89,39 @@ In pseudo-OpenGL:
   glNamedFramebufferDrawBuffer(fbo, GL_COLOR_ATTACHMENT0);
 ```
 
-This preprocessing stage is correctly executed through the following steps:
-  1. Initalize and allocate texture
-  2. Initialize FBO
-  3. 
+Shadow map render - multiple light-sources (2D array texture):
+
+```C++
+  GLuint tex, fbo;
+  glGenTextures(1, &tex);
+  glGenFramebuffers(1, &fbo);
+
+  glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+  glTexStorage3D(GL_TEXTURE_2D_ARRAY,     // allocates storage to texture binded to GL_TEXTURE_2D_ARRAY
+                 1,                       // mipmap level
+                 GL_DEPTH_COMPONENT32,    // internal format
+                 width,                   
+                 height,
+                 3);                      // # layers
+
+  
+  ... // Set texture parameters
+
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  int i;
+  for (Light &light : lights) {
+    glFramebufferTextureLayer(GL_FRAMEBUFFER,       
+                              GL_DEPTH_ATTACHMENT, 
+                              tex,                 
+                              0,
+                              i); // layer #
+    // Goes to currently binded FBO
+    glDrawBuffer(GL_DEPTH_ATTACHMENT);
+
+    ...  // Render scene
+
+    i++;
+  }
+```
+
+In the main render, the shadow map must be attached as a `GL_TEXTURE_2D_ARRAY`.
