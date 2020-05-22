@@ -129,7 +129,6 @@ class Orientation {
     Orientation(std::string, std::string, std::string, float, float, float);
  
     const GLfloat *view();
-    const GLfloat *scale_bias();
     const GLfloat *perspective(const float &, const float &);
 };
 

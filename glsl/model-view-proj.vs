@@ -25,9 +25,9 @@ layout(location = 0) in vec3 in_Position;
 layout(location = 1) in vec3 in_Normal;
 layout(location = 2) in vec2 in_Tex;
 
-uniform mat4 M_model;
-uniform mat4 M_per;
-uniform mat4 M_cam;
+uniform mat4 model;
+uniform mat4 per;
+uniform mat4 view;
 uniform vec3 eye;
 uniform int num_lights;
 uniform Light lights[MAX_NUM_LIGHTS];
@@ -70,12 +70,12 @@ void main(void) {
     vLights[i].h = h;
 
     mat4 shadowMat = lights[i].shadowMat;
-    vLights[i].shadowCoords = shadowMat * M_model * vec4(pos, 1.0);
+    vLights[i].shadowCoords = shadowMat * model * vec4(pos, 1.0);
   }
    
   vEye = v;
 
   // Calculate screen coordinates for input vertex
-  vec4 _pos = M_per * M_cam * M_model * vec4(pos, 1.0);
+  vec4 _pos = per * view * model * vec4(pos, 1.0);
   gl_Position = _pos;
 }

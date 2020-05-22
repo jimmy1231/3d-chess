@@ -220,22 +220,23 @@ int main(int argc, char *argv[]) {
     GLint M_proj_id, M_per_id, M_cam_id;
     GLint ks_id, kd_id, ka_id, Ia_id, p_id;
     GLint num_lights_id;
-    GLint M_scale_bias_id;
-    M_per_id = glGetUniformLocation(prog_id, "M_per");
-    M_cam_id = glGetUniformLocation(prog_id, "M_cam");
+    M_per_id = glGetUniformLocation(prog_id, "per");
+    M_cam_id = glGetUniformLocation(prog_id, "view");
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
     ka_id = glGetUniformLocation(prog_id, "ka");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
     num_lights_id = glGetUniformLocation(prog_id, "num_lights");
-    M_scale_bias_id = glGetUniformLocation(prog_id, "M_scale_bias");
 
     // Send uniform variables to device
-    glUniformMatrix4fv(M_per_id, 1, false, 
-      scene.orient->perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
-    glUniformMatrix4fv(M_cam_id, 1, false, scene.orient->view());
-    glUniformMatrix4fv(M_scale_bias_id, 1, false, scene.orient->scale_bias());
+    Orientation *orient = scene.orient;
+    glUniformMatrix4fv(M_per_id, 1, 
+                       GL_FALSE, 
+                       orient->perspective(WIDTH_PIXELS, HEIGHT_PIXELS));
+    glUniformMatrix4fv(M_cam_id, 1, 
+                       GL_FALSE, 
+                       orient->view());
     glUniform3fv(ks_id, 1, scene.Ks());
     glUniform3fv(kd_id, 1, scene.Kd());
     glUniform3fv(ka_id, 1, scene.Ka());
@@ -256,7 +257,7 @@ int main(int argc, char *argv[]) {
 
     GLint tex_id, M_model_id;
     tex_id = glGetUniformLocation(prog_id, "tex");
-    M_model_id = glGetUniformLocation(prog_id, "M_model");
+    M_model_id = glGetUniformLocation(prog_id, "model");
     glUniform1i(tex_id, 1);
 
     for (Model *&model : scene.models) {

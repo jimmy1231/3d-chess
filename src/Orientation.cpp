@@ -36,17 +36,6 @@ const GLfloat *Orientation::view() {
   return (const GLfloat *)&view_;
 }
 
-const GLfloat *Orientation::scale_bias() {
-  scale_bias_ = glm::transpose(glm::mat4(
-    0.5, 0.0, 0.0, 0.5,
-    0.0, 0.5, 0.0, 0.5,
-    0.0, 0.0, 0.5, 0.5,
-    0.0, 0.0, 0.0, 1.0
-  ));
-
-  return (const GLfloat *)&scale_bias_;
-}
-
 const GLfloat *Orientation::perspective(const float &width, const float &height) {
   per_ = glm::perspective(
     glm::radians(fovy), width/height,
