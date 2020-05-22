@@ -94,12 +94,25 @@ namespace screen {
   };
 
   void 
-  screenshot(const GLuint FBO,
-             const GLenum mode,
-             const screen::ImageType type, 
-             const int width,
-             const int height,
-             const char *output_file);
+  depth_2D_screenshot(const GLuint FBO,
+                      const GLenum mode,
+                      const screen::ImageType type, 
+                      const int width,
+                      const int height,
+                      const char *output_file);
+
+  unsigned char *
+  read_depth_tex_layer(const GLuint tex,
+                       const int width,
+                       const int height,
+                       const int layer);
+
+  void 
+  depth_3D_layer_screenshot(const GLuint tex,
+                            const int width,
+                            const int height,
+                            const int layer,
+                            const char *output_file);
 }
 
 /* Make sure dimensions are the closest powers of 2 */

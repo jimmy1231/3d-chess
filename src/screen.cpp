@@ -1,12 +1,14 @@
 #include <glad/glad.h>
 #include "lib.hpp"
 
-void screen::screenshot(const GLuint FBO,
-                        const GLenum mode,
-                        const screen::ImageType type, 
-                        const int width,
-                        const int height,
-                        const char *output_file)
+static void 
+save_as_tga(unsigned char *data,
+            const size_t data_size,
+            const size_t width,
+            const size_t height,
+            const bool free_data,
+            const screen::ImageType type,
+            const char *filename)
 {
   /* 
    * Tightly pack - not used due to memory alignment
@@ -49,8 +51,71 @@ void screen::screenshot(const GLuint FBO,
   tga_header.width = (short)width;
   tga_header.height = (short)height;
 
+  FILE *f_out = fopen(filename, "wb");
+  fwrite(&tga_header, sizeof(tga_header), 1, f_out);
+  fwrite(data, data_size, 1, f_out);
+  fclose(f_out);
+
+  if (free_data) {
+    free(data);
+  }
+}
+
+unsigned char *
+screen::read_depth_tex_layer(const GLuint tex,
+                             const int width,
+                             const int height,
+                             const int layer)
+{
   unsigned char *data;
-//  int data_size = ((3 * width + 3) & ~3) * height;
+  data = (unsigned char *)malloc(width * height);
+  glGetTextureSubImage(tex,
+                       0,
+                       0,
+                       0,
+                       layer,
+                       width,
+                       height,
+                       1,
+                       GL_DEPTH_COMPONENT,
+                       GL_UNSIGNED_BYTE,
+                       width * height,
+                       data);
+
+  return data;
+}
+
+void 
+screen::depth_3D_layer_screenshot(const GLuint tex,
+                                  const int width,
+                                  const int height,
+                                  const int layer,
+                                  const char *filename)
+{
+  unsigned char *data;
+  data = screen::read_depth_tex_layer(tex,
+                                      width,
+                                      height,
+                                      layer);
+  save_as_tga(data,
+              width * height,
+              width,
+              height,
+              true,
+              ImageType::IMAGE_TYPE_GREYSCALE,
+              filename); 
+}
+
+void 
+screen::depth_2D_screenshot(const GLuint FBO,
+                            const GLenum mode,
+                            const screen::ImageType type, 
+                            const int width,
+                            const int height,
+                            const char *output_file)
+{
+  unsigned char *data;
+
   int data_size = width * height;
   data = (unsigned char *)malloc(data_size);
 
@@ -60,12 +125,15 @@ void screen::screenshot(const GLuint FBO,
                width, height,
                GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE,
                data);
-
-  FILE *f_out = fopen(output_file, "wb");
-  fwrite(&tga_header, sizeof(tga_header), 1, f_out);
-  fwrite(data, data_size, 1, f_out);
-  fclose(f_out);
-
-  free(data);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  save_as_tga(data,
+              data_size,
+              width,
+              height,
+              true,
+              ImageType::IMAGE_TYPE_GREYSCALE,
+              output_file);
 }
+
+
