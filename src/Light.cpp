@@ -17,6 +17,10 @@ Light::Light(std::string p, std::string i, glm::vec3 t, int w, int h)
   per = mat::perspective(w, h, 1.0f, 100.0f, 30.0f);
 }
 
-glm::mat4 Light::shadowMat() {
+glm::mat4 Light::Mvp_bias() {
+  return mat::shadow_bias * per * view;
+}
+
+glm::mat4 Light::Mvp() {
   return per * view;
 }

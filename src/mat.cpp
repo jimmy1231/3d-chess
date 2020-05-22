@@ -15,7 +15,7 @@
 #define _DEBUG_MAT_LOGS_ 0 
 
 
-glm::mat4 shadow_bias{
+glm::mat4 mat::shadow_bias{
   0.5, 0.0, 0.0, 0.0,
   0.0, 0.5, 0.0, 0.0,
   0.0, 0.0, 0.5, 0.0,

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 #include "lib.hpp"
@@ -79,10 +80,9 @@ ShadowMap::ShadowMap(std::vector<Light> &lights,
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
-    glUniformMatrix4fv(1, 1, false, glm::value_ptr(light.per));
-    glUniformMatrix4fv(2, 1, false, glm::value_ptr(light.view));
+    glUniformMatrix4fv(1, 1, false, glm::value_ptr(light.Mvp()));
     for (Model *&model : models) {
-      glUniformMatrix4fv(3, 1, false, model->model());
+      glUniformMatrix4fv(2, 1, false, model->model());
       glBindVertexArray(model->data_->vao);
       glDrawArrays(GL_TRIANGLES, 0, model->data_->size());
 
@@ -97,13 +97,13 @@ ShadowMap::ShadowMap(std::vector<Light> &lights,
     char screenshot_filename[30];
     snprintf(screenshot_filename, 30, "../shadow_map_%d.tga", i);
 
-    screen::depth_3D_layer_screenshot(tex,
-                                      width,
-                                      height,
-                                      i,
-                                      screenshot_filename);
+    using namespace screen;
+    depth_3D_layer_screenshot(tex,
+                              width,
+                              height,
+                              i, /* Layer # */
+                              screenshot_filename);
 #endif
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);

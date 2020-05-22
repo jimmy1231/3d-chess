@@ -68,7 +68,9 @@ void main(void) {
     vec3 h = normalize(v+l);
     vLights[i].l = l;
     vLights[i].h = h;
-    vLights[i].shadowCoords = lights[i].shadowMat * M_model * vec4(pos, 1.0);
+
+    mat4 shadowMat = lights[i].shadowMat;
+    vLights[i].shadowCoords = shadowMat * M_model * vec4(pos, 1.0);
   }
    
   vEye = v;

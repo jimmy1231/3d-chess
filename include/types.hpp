@@ -88,7 +88,8 @@ class Light {
     glm::vec3 intensity;
 
     Light(std::string p, std::string i, glm::vec3 t, int w, int h);
-    glm::mat4 shadowMat();
+    glm::mat4 Mvp_bias();
+    glm::mat4 Mvp();
 };
 
 class Texture {

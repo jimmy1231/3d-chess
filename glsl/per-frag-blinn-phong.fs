@@ -29,7 +29,7 @@ uniform float p;
 uniform int num_lights;
 uniform Light lights[MAX_NUM_LIGHTS];
 uniform sampler2D tex;
-uniform sampler2DArray shadows;
+uniform sampler2DArrayShadow shadows;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
 
@@ -68,7 +68,7 @@ void main(void) {
   float e = 2.0;
   for (i=0; i<bound; i++) {
     float w = vLights[i].shadowCoords.w;
-    vec2 uv = (vLights[i].shadowCoords.xyz / w).xy;
+    vec3 uvz = vLights[i].shadowCoords.xyz / w;
 
     n = normalize(vNormal);
     v = normalize(vEye);
@@ -81,8 +81,8 @@ void main(void) {
      * so as to correspond to the i'th light 
      * in the scene
      */
-    float s = texture(shadows, vec3(uv, float(i))).z;
-    if (s >= 0.0) {
+    float s = texture(shadows, vec4(uvz.xy, float(i), uvz.z));
+    if (s > 0.0) {
       L = intensity * max(0, dot(n, l)); 
       S = ks * intensity * pow(max(0, dot(n, h)), p); 
 

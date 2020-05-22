@@ -185,7 +185,7 @@ void Scene::ld_lights_uniform(const GLuint prog,
 
     snprintf(id_name, 100, shadowMatFmtStr, i);
     id = glGetUniformLocation(prog, id_name);
-    glm::mat4 shadowMat = light->shadowMat();
+    glm::mat4 shadowMat = light->Mvp_bias();
     glUniformMatrix4fv(id, 1, false, glm::value_ptr(shadowMat));
   } 
 }
