@@ -11,3 +11,4 @@ glm/
 *.obj
 *.mtl
 json.hpp
+*.tga

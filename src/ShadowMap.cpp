@@ -3,7 +3,7 @@
 #include "lib.hpp"
 #include "types.hpp"
 
-#define SCENE_DEBUG 0
+#define SCENE_DEBUG 1 
 
 GLenum ShadowMap::DRAW_BUFFERS[1] = {GL_DEPTH_ATTACHMENT};
 
