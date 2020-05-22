@@ -4,7 +4,6 @@
 struct Light {
   vec3 position;
   vec3 intensity;  
-  sampler2DShadow shadow;
   mat4 shadowMat;
 };
 
@@ -30,6 +29,7 @@ uniform float p;
 uniform int num_lights;
 uniform Light lights[MAX_NUM_LIGHTS];
 uniform sampler2D tex;
+uniform sampler2DArray shadows;
 
 layout(location = 0) out vec4 out_Fragmentcolor;
 
@@ -61,27 +61,29 @@ void main(void) {
   vec3 kdTexel = texture(tex, vTex).rgb;
   vec3 c = vec3(0,0,0);
   vec3 l, n, v, h;
-  vec3 shadow_coords, shadowCoords;
   vec3 intensity;
-  sampler2DShadow shadow;
   int i;
   int bound = min(num_lights, MAX_NUM_LIGHTS);
 
   float e = 2.0;
   for (i=0; i<bound; i++) {
-    shadow_coords = vLights[i].shadowCoords;
-    shadowCoords = shadow_coords.xyz / shadow_coords.w;
+    float w = vLights[i].shadowCoords.w;
+    vec2 uv = (vLights[i].shadowCoords.xyz / w).xy;
 
     n = normalize(vNormal);
     v = normalize(vEye);
     h = normalize(vLights[i].h);
     l = normalize(vLights[i].l);
     intensity = lights[i].intensity;
-    shadow = lights[i].shadow;
 
-    float s = texture(shadow, shadowCoords, 0.05);
+    /* 
+     * i'th index of 'shadows' should be set up
+     * so as to correspond to the i'th light 
+     * in the scene
+     */
+    float s = texture(shadows, vec3(uv, float(i))).z;
     if (s >= 0.0) {
-      L = shadow * intensity * max(0, dot(n, l)); 
+      L = intensity * max(0, dot(n, l)); 
       S = ks * intensity * pow(max(0, dot(n, h)), p); 
 
       c += (L+S);

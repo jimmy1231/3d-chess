@@ -1,4 +1,8 @@
 {
+  "programs": {
+    "shadow-vs": "../glsl/shadow-map.vs",
+    "shadow-fs": "../glsl/shadow-map.fs"
+  },
 	"lights": [
     {
       "position": "10 5 10",

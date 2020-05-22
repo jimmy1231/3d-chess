@@ -23,7 +23,8 @@ add_executable(render main.cpp
 					  ${ROOT}/src/bind.cpp
 					  ${ROOT}/src/load_obj.cpp
 					  ${ROOT}/src/mat.cpp
-					  ${ROOT}/src/screen.cpp)
+					  ${ROOT}/src/screen.cpp
+					  ${ROOT}/src/ShadowMap.cpp)
 					  
 include_directories(AFTER ${ROOT}/include)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${OPENGL_INCLUDE_DIR})

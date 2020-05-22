@@ -1,17 +1,24 @@
+#include <glm/gtc/type_ptr.hpp>
+#include <glad/glad.h>
+#include "lib.hpp"
 #include "types.hpp"
 
-ShadowMap::ShadowMap(std::vector<Light> lights,
+#define SCENE_DEBUG 0
+
+GLenum ShadowMap::DRAW_BUFFERS[1] = {GL_DEPTH_ATTACHMENT};
+
+ShadowMap::ShadowMap(std::vector<Light> &lights,
+                     std::vector<Model *> &models,
                      int width,
                      int height,
 					           std::string nvs,
                      std::string nfs) 
 {
-  GLuint tex;
   glGenTextures(1, &tex);
   glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-  glTexStorge3D(GL_TEXTURE_2D_ARRAY,
+  glTexStorage3D(GL_TEXTURE_2D_ARRAY,
                 1,
-                GL_DEPTH_COMPONENT_32, 
+                GL_DEPTH_COMPONENT32, 
                 width, 
                 height, 
                 lights.size());
@@ -51,15 +58,12 @@ ShadowMap::ShadowMap(std::vector<Light> lights,
   glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
   GLuint prog = load_shaders_simple(nvs, nfs); 
-  GLuint fbo; 
   glGenFramebuffers(1, &fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
   /* Iniitalize program outside */
-  std::vector<Model *> models = scene.models;
-  Light &light;
   for (int i=0; i<lights.size(); ++i) {
-    light = lights[i];
+    Light &light = lights[i];
 
     glUseProgram(prog);
     glFramebufferTextureLayer(GL_FRAMEBUFFER,
@@ -88,21 +92,18 @@ ShadowMap::ShadowMap(std::vector<Light> lights,
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glUseProgram(0);
+
+#if SCENE_DEBUG
+    char screenshot_filename[30];
+    snprintf(screenshot_filename, 30, "../shadow_map_%d.tga", i);
+
+    screen::screenshot(fbo,
+       GL_DEPTH_ATTACHMENT,
+       screen::ImageType::IMAGE_TYPE_GREYSCALE,
+       width, height,
+       screenshot_filename);
+#endif
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

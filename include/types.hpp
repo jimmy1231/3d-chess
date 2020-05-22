@@ -15,8 +15,7 @@
 
 class Scene {
   public:
-    int WIDTH;
-    int HEIGHT;
+    int WIDTH, HEIGHT;
 
     std::string filename;
 
@@ -28,7 +27,8 @@ class Scene {
     glm::vec3 Ka_;
     int p;
 
-    Texture *shadow;
+    ShadowMap *shadowMap;
+
     std::unordered_map<std::string, Texture *> textures;
     std::unordered_map<std::string, Data *> objects;
     std::vector<Model *> models;
@@ -41,23 +41,26 @@ class Scene {
     const GLfloat *Ks();
     const GLfloat *Ia();
 
-    void ld_shadow_map(const std::string &, const std::string &);
     void ld_lights_uniform(const GLuint,
-                          const char *,
-                          const char *,
-                          const char *,
-                          const char *,
-                          const GLuint);
-    glm::mat4 shadowMat();
+                           const char *position,
+                           const char *intensity,
+                           const char *shadowMap,
+                           const GLuint offset);
 };
 
 class ShadowMap {
-	static const GLenum DRAW_BUFFERS[] = {GL_DEPTH_ATTACHMENT};
+	static GLenum DRAW_BUFFERS[1];
 	public:
-		ShadowMap(std::vector<Light> &,
+		GLuint fbo;
+		GLuint tex;
+
+		ShadowMap(std::vector<Light> &lights,
+						  std::vector<Model *> &models,
+							int width,
+							int height,
 							std::string nvs,
 							std::string nfs);
-}
+};
 
 class Model {
   public:
@@ -84,7 +87,8 @@ class Light {
     glm::vec3 position;
     glm::vec3 intensity;
 
-    Light(std::string, std::string);
+    Light(std::string p, std::string i, glm::vec3 t, int w, int h);
+    glm::mat4 shadowMat();
 };
 
 class Texture {
@@ -102,16 +106,8 @@ class Texture {
     int layers;
 
     Texture(std::string);
-    Texture(unsigned char *data, int w, int h, int layers);
-    Texture(int w, int h, int layers);
     Texture();
     ~Texture();
-
-    void bind_to_unit(GLuint);
-    void shadow_map(const GLuint prog,
-                    Scene &scene,
-                    const glm::mat4 &per,
-                    const glm::mat4 &view);
 };
 
 class Orientation {

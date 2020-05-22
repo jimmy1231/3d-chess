@@ -282,7 +282,7 @@ init_static_array_vbo(void *data, size_t nbytes) {
 }
 
 GLuint
-init_VBO_STRUCT_vao(GLuint vbo, size_t stride) {
+init_array_VBO_STRUCT_vao(GLuint vbo, size_t stride) {
   GLuint vao;
   glGenVertexArrays(1, &vao); 
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -296,7 +296,6 @@ init_VBO_STRUCT_vao(GLuint vbo, size_t stride) {
     assert(_vao == vao);
   }
   
-  size_t stride = sizeof(ld_o::VBO_STRUCT);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0,
                         3, 
@@ -324,4 +323,18 @@ init_VBO_STRUCT_vao(GLuint vbo, size_t stride) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
   return vao;
+}
+
+GLuint
+load_shaders_simple(std::string nvs, std::string nfs) {
+  // Load shadow map shaders
+  GLuint prog_id;
+  std::vector<ShaderProg> progs;
+  ShaderProg vs, fs;
+  vs = {nvs, GL_VERTEX_SHADER};
+  fs = {nfs, GL_FRAGMENT_SHADER};
+  progs.push_back(vs);
+  progs.push_back(fs);
+  bind_shaders(progs, prog_id);
+  return prog_id;
 }

@@ -30,23 +30,6 @@ Scene::Scene(std::string n, int w, int h)
 
   json j = json::parse(buf.str()); 
 
-  // Lights
-  {
-    auto lights = j["lights"];
-    assert(lights.is_array());
-
-    json lightJson;
-    int i;
-    for (i=0; i<lights.size(); i++) {
-      lightJson = lights[i];
-      Light light(
-        lightJson["position"].get<std::string>(),
-        lightJson["intensity"].get<std::string>()
-      );
-      this->lights_.push_back(light); 
-    }
-  }
-
   // Miscellaneous
   {
     this->orient = new Orientation{
@@ -63,6 +46,26 @@ Scene::Scene(std::string n, int w, int h)
     this->Ka_ = parse_vec3(j["Ka"].get<std::string>()); 
     this->Ks_ = parse_vec3(j["Ks"].get<std::string>()); 
     this->p = j["p"].get<int>();
+  }
+
+  // Lights
+  {
+    auto lights = j["lights"];
+    assert(lights.is_array());
+
+    json lightJson;
+    int i;
+    for (i=0; i<lights.size(); i++) {
+      lightJson = lights[i];
+      Light light(
+        lightJson["position"].get<std::string>(),
+        lightJson["intensity"].get<std::string>(),
+        this->orient->top,
+        this->WIDTH,
+        this->HEIGHT       
+      );
+      this->lights_.push_back(light); 
+    }
   }
 
   // Objects
@@ -84,6 +87,7 @@ Scene::Scene(std::string n, int w, int h)
     }
   }
 
+  // Textures
   {
     auto textures = j["textures"];
     assert(textures.is_array());
@@ -135,51 +139,22 @@ Scene::Scene(std::string n, int w, int h)
       this->models.push_back(model);
     }
   }
-}
 
-void Scene::ld_shadow_maps(const std::string &nvs,
-                           const std::string &nfs) {
-  /*
-   * Load shadow by pre-rendering shadow map into a 
-   * texture framebuffer proxy. After this pre-render.
-   * Since we bind the shadow map texture to the 
-   * framebuffer, the resulting render (i.e. shadow
-   * map) will be stored in a GPU buffer referenced by
-   * our texture.
-   * We can then use this texture to generate shadows
-   * in our main render. Shadow map need not change
-   * unless objects/lights in our scene moves, in which
-   * case we need to re-render the shadow map.
-   */
-
-  // Load shadow map shaders
-  GLuint prog_id;
+  // Shadow Map
   {
-    std::vector<ShaderProg> progs;
-    ShaderProg vs, fs;
-    vs = {nvs, GL_VERTEX_SHADER};
-    fs = {nfs, GL_FRAGMENT_SHADER};
-    progs.push_back(vs);
-    progs.push_back(fs);
-    bind_shaders(progs, prog_id);
+    auto programs = j["programs"];
+
+    std::string nvs, nfs;
+    nvs = programs["shadow-vs"].get<std::string>();
+    nfs = programs["shadow-fs"].get<std::string>();
+
+    this->shadowMap = new ShadowMap(
+      this->lights_,
+      this->models,
+      this->WIDTH, this->HEIGHT,
+      nvs, nfs
+    );
   }
-
-  Light *light;
-  int i;
-  for (i=0; i<lights_.size(); i++) {
-    light = &lights_[i];
-    light->initShadow(prog_id, *this);
-#if SCENE_DEBUG
-    char screenshot_filename[30];
-    snprintf(screenshot_filename, 30, "../shadow_map_%d.tga", i);
-
-    screen::screenshot(light->shadow->fbo_id,
-                       GL_DEPTH_ATTACHMENT,
-                       screen::ImageType::IMAGE_TYPE_GREYSCALE,
-                       this->WIDTH, this->HEIGHT,
-                       screenshot_filename);
-#endif
-  } 
 }
 
 const GLfloat *Scene::Kd() {return (const GLfloat *)&Kd_; }
@@ -190,7 +165,6 @@ const GLfloat *Scene::Ia() {return (const GLfloat *)&Ia_; }
 void Scene::ld_lights_uniform(const GLuint prog,
                               const char *posFmtStr,
                               const char *intensityFmtStr,
-                              const char *shadowFmtStr,
                               const char *shadowMatFmtStr,
                               const GLuint startIndex) 
 {
@@ -209,24 +183,9 @@ void Scene::ld_lights_uniform(const GLuint prog,
     id = glGetUniformLocation(prog, id_name);   
     glUniform3fv(id, 1, (const GLfloat *)&light->intensity);
 
-    /*
-     * Bind each light's shadow map to a preset location.
-     * The reason we have 'startIndex' is to leave it up
-     * to the caller to decide if they want to allocate 
-     * texture units for other textures (e.g. normal maps,
-     * model textures, etc.).
-     */
-    if (light->shadow != NULL) {
-      snprintf(id_name, 100, shadowFmtStr, i);
-      id = glGetUniformLocation(prog, id_name);
-      texUnitId = startIndex + i;
-
-      glUniform1i(id, texUnitId);
-      light->shadow->bind_to_unit(texUnitId); 
-
-      snprintf(id_name, 100, shadowMatFmtStr, i);
-      id = glGetUniformLocation(prog, id_name);
-      glUniform4fv(id, 1, glm::value_ptr(light->shadowMat())); 
-    }
+    snprintf(id_name, 100, shadowMatFmtStr, i);
+    id = glGetUniformLocation(prog, id_name);
+    glm::mat4 shadowMat = light->shadowMat();
+    glUniformMatrix4fv(id, 1, false, glm::value_ptr(shadowMat));
   } 
 }

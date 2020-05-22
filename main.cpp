@@ -181,8 +181,6 @@ int main(int argc, char *argv[]) {
    * change in between frames, so we can create it once, and
    * reuse it.
   */
-  scene.ld_shadow_maps("../glsl/shadow-map.vs", 
-                      "../glsl/shadow-map.fs");
   GLuint prog_id = ld_shaders("../glsl/model-view-proj.vs", 
                               "../glsl/per-frag-blinn-phong.fs");
 
@@ -220,20 +218,18 @@ int main(int argc, char *argv[]) {
     glUseProgram(prog_id);
 
     GLint M_proj_id, M_per_id, M_cam_id;
-    GLint ks_id, kd_id, ka_id;
-    GLint Ia_id;
+    GLint ks_id, kd_id, ka_id, Ia_id, p_id;
     GLint num_lights_id;
-    GLint p_id;
     GLint M_scale_bias_id;
     M_per_id = glGetUniformLocation(prog_id, "M_per");
     M_cam_id = glGetUniformLocation(prog_id, "M_cam");
-    M_scale_bias_id = glGetUniformLocation(prog_id, "M_scale_bias");
     ks_id = glGetUniformLocation(prog_id, "ks");
     kd_id = glGetUniformLocation(prog_id, "kd");
     ka_id = glGetUniformLocation(prog_id, "ka");
-    num_lights_id = glGetUniformLocation(prog_id, "num_lights");
     Ia_id = glGetUniformLocation(prog_id, "Ia");
     p_id = glGetUniformLocation(prog_id, "p");
+    num_lights_id = glGetUniformLocation(prog_id, "num_lights");
+    M_scale_bias_id = glGetUniformLocation(prog_id, "M_scale_bias");
 
     // Send uniform variables to device
     glUniformMatrix4fv(M_per_id, 1, false, 
@@ -249,41 +245,45 @@ int main(int argc, char *argv[]) {
     scene.ld_lights_uniform(prog_id, 
                            "lights[%d].position",
                            "lights[%d].intensity",
-                           "lights[%d].shadow",
                            "lights[%d].shadowMat",
                            1);
 
-    Texture *tex;
-    Data *data;
-    GLint M_model_id, tex_id;
+    GLint shadow_id;
+    shadow_id = glGetUniformLocation(prog_id, "shadowMaps");
+    glUniform1i(shadow_id, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, scene.shadowMap->tex);
+
+    GLint tex_id, M_model_id;
+    tex_id = glGetUniformLocation(prog_id, "tex");
+    M_model_id = glGetUniformLocation(prog_id, "M_model");
+    glUniform1i(tex_id, 1);
+
     for (Model *&model : scene.models) {
-      data = model->data_;
-      tex = model->tex_;
-      data->bind_VAO();
-      glBindVertexArray(data->vao);
-
-      M_model_id = glGetUniformLocation(prog_id, "M_model");
-
       // Bind texture for model
-      if (tex != NULL) {
-        tex_id = glGetUniformLocation(prog_id, "tex");
+      if (model->tex_ != NULL) {
         glUniformMatrix4fv(M_model_id, 1, false, model->model());
-        glUniform1i(tex_id, 0);
-        tex->bind_to_unit(0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, model->tex_->id);
       }
-      glDrawArrays(GL_TRIANGLES, 0, data->size());
+
+      glBindVertexArray(model->data_->vao);
+      glDrawArrays(GL_TRIANGLES, 0, model->data_->size());
     } 
 
     // Unbind the shaders
     glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     glBindVertexArray(0);
     glUseProgram(0);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
 
+    // FPS controller
     toc = clock::now();
-    auto elapsed_ms = duration_cast<std::chrono::milliseconds>(toc-tic);
+    using millis = std::chrono::milliseconds;
+    auto elapsed_ms = duration_cast<millis>(toc-tic);
     if (elapsed_ms < fps) {
       auto left = fps-elapsed_ms;
       std::this_thread::sleep_for(left);

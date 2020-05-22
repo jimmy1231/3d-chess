@@ -84,6 +84,9 @@ load_shaders_simple(std::string nvs,
 GLuint
 init_static_array_vbo(void *data, size_t size);
 
+GLuint
+init_array_VBO_STRUCT_vao(GLuint vbo, size_t stride);
+
 namespace screen {
   enum class ImageType {
     IMAGE_TYPE_RGB,
@@ -110,6 +113,39 @@ inline int clamp_dim(int dim) {
   }
 
   return _dim / 2;
+}
+
+inline bool check_fbo_status(GLuint fbo, GLenum target) {
+  GLenum fboStatus = glCheckFramebufferStatus(target);
+  bool complete = false;
+  std::string str;
+  switch (fboStatus) {
+    case GL_FRAMEBUFFER_COMPLETE:
+      str = "COMPLETE";
+      complete = true;
+      break;
+    case GL_FRAMEBUFFER_UNDEFINED:
+      str = "UNDEFINED";
+      break;
+    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+      str = "INCOMPLETE_ATTACHMENT";
+      break;
+    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+      str = "tINCOMPLETE_MISSING_ATTACHMENT";
+      break;
+    case GL_FRAMEBUFFER_UNSUPPORTED:
+      str = "FRAMEBUFFER_UNSUPPORTED";
+      break;
+    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+      str = "FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+      break;
+    default:
+      break;
+  }
+
+  printf("Framebuffer %d: %s\n", fbo, 
+    str.c_str());
+  return complete;
 }
 
 #endif /* __RENDER_LIB_H__ */

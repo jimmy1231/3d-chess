@@ -4,7 +4,6 @@
 struct Light {
   vec3 position;
   vec3 intensity;  
-  sampler2DShadow shadow;
   mat4 shadowMat;
 };
 

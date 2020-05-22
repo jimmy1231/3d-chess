@@ -11,3 +11,4 @@ class Light;
 class Orientation;
 class Texture;
 class Data;
+class ShadowMap;
